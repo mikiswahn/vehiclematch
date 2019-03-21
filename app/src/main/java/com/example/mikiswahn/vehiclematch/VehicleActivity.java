@@ -10,6 +10,10 @@ import javax.net.ssl.HttpsURLConnection;
 //import java.util.Base64.Encoder;
 
 
+
+
+/* Class for collecting location data from vehicles. */
+
 public class VehicleActivity extends FragmentActivity{
 
     TextView t1;

@@ -7,8 +7,8 @@ import android.support.annotation.NonNull;
 
 import java.util.Date;
 
-//INTE PASSENGERS I DB UTAN SNAPSHOT I DB SÅ BYT NAMN HALLÅ DETTA BLEV KONSTIGT
-//ELELR?
+//INTE PASSENGERS, UTAN SNAPSHOTS I DB SÅ BYT NAMN FRÅN PASSENGER TILL SNAPHOTS
+//MAN PLOCKAR INTE HELLER UT ETT PASSNEGR OBJEKT, UTAN ETT SNAPSHOT
 @Entity
 public class Passenger {
     @NonNull
@@ -17,7 +17,8 @@ public class Passenger {
 
     //@ColumnInfo(name = "timestamp")
     //public Date timestamp;
-    // error: Cannot figure out how to save this field(Date) into database. You can consider adding a type converter for it.
+    // error: Cannot figure out how to save this field(Date) into database.
+    // You can consider adding a type converter for it.
 
     @ColumnInfo(name = "longitude")
     public double lng;
