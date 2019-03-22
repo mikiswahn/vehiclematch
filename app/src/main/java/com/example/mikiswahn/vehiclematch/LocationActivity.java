@@ -51,9 +51,9 @@ public class LocationActivity extends FragmentActivity{
     protected void createLocationRequest() {
         long onesecond = 1000;
         locationRequest = LocationRequest.create();
-        locationRequest.setInterval(onesecond);
+        locationRequest.setInterval(onesecond); //när man kör appen blir det två sekunder..
         locationRequest.setFastestInterval(onesecond);
-        //locationRequest.setMaxWaitTime(onesecond);
+        //locationRequest.setMaxWaitTime(onesecond); varför blir det ännu långsammare med denna, typ 10-15 sek
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(locationRequest);

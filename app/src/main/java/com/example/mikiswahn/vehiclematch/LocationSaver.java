@@ -86,7 +86,7 @@ public class LocationSaver {
     public String coordinatePrettyPrint (Location location){
         final double lat = location.getLatitude();
         final double lng = location.getLongitude();
-        return "(" + lat + ",  " + lng + ")";
+        return "(" + lat + ", " + lng + ")";
     }
 
     public String speedPrettyPrint (Location location){
@@ -102,42 +102,23 @@ public class LocationSaver {
     public String timePrettyPrint(Location location){
         long timestamp = location.getTime();
         Date date = new Date(timestamp);
-        return date.toString();
+        String longDate = date.toString();
+        return longDate.substring(11, 19);
     }
+
+    //date.toString() -> "Thu Mar 21 16:03:20 GMT+01:00 2019"
 
     public String fileNameWithDate(){
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Europe/Stockholm"));
         Date dateO = cal.getTime();
-        String date = dateO.toString();
+        String dateS = dateO.toString();
+        String date = dateS.substring(0, 13) + dateS.substring(14, 16); //filename without ':'
         return "snapshots_" + date + ".txt";
     }
 
 
 }
-
-
-
-
-//Om time inte fungerar som det ska testa detta:
-//instansvariabel
-//private long ElapsedTimeAtStart;
-//intiera vid print
-//if (count == 1){
-//    ElapsedTimeAtStart = (long) location.getElapsedRealtimeNanos();
-//}
-//i timeprettyprint
-        /* this didn't work
-        long start = startTime.getTime();
-        long elapsedTime = (long) location.getElapsedRealtimeNanos();
-        long timestamp1 = start + elapsedTime  - ElapsedTimeAtStart;
-        Date date1 = new Date(timestamp1);
-        Log.e("**** TIMESTAMP COMPARE", "system start epoch + elapsed time: " + date1.toString());
-        Log.e("**** TIMESTAMP COMPARE", "location : " + date.toString());
-        Log.e("**** ", "");
-        */
-
-
 
 
         /* Skriv till databas:
