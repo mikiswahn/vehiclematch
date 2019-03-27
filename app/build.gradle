@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion rootProject.compileSdkVersion
     buildToolsVersion rootProject.buildToolsVersion
     defaultConfig {
         applicationId "com.example.mikiswahn.vehiclematch"
-        minSdkVersion 15  //26
-        targetSdkVersion 28  //26+
+        minSdkVersion rootProject.minSdkVersion
+        targetSdkVersion rootProject.minSdkVersion
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
