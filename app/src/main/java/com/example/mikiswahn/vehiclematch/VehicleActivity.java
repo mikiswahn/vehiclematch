@@ -1,23 +1,22 @@
 package com.example.mikiswahn.vehiclematch;
 
+import java.util.Base64;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.JsonReader;
 import android.util.Log;
 import android.widget.TextView;
 import android.os.AsyncTask;
-
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import javax.net.ssl.HttpsURLConnection;
-import java.net.URL;
-import java.util.Base64;
-
 
 
 
@@ -33,20 +32,23 @@ public class VehicleActivity extends FragmentActivity{
 
     private String apiKey = "gUcw2uf9fQJT9JMyyf43gWpyl9Ma";
     private String apiSecret = "Ay6or6sJCgDod_D102Sjio_Pt5ca";
-    public final String id = "device_1"; //client-/device id
-    private String scope = "device_1"; //Bara om appen distribueras behöver användarna unika scopes
+    //client-/device id, Bara om appen distribueras behöver användarna unika scopes
+    public final String id = "device_1";
     private String tokenType = "Bearer";
     private String accessToken;
 
-    double lng = 57.7042458;
-    double lat = 11.9636235;
-    //x determined by longitude
-    //y determined by latitude
-    // Remember to convert to api format, ie. lng * 1000000 ish
-    double maxx;
-    double minx;
-    double maxy;
-    double miny;
+    //enclose Brunnssparken
+    //longitude
+    int x1 = 11966699;
+    int x2 = 11971377;
+    //latitude
+    int y1 = 57706108;
+    int y2 = 57709250;
+
+    //The radius in meters around a passenger where their vehicle is assumed to be within
+    int raduis = 50; //= variable D in alg.
+    //which translates to the following addition to a GPS coordinate in WGS84 * 1000000
+    int gpsRadius;
 
 
     @Override
@@ -59,163 +61,136 @@ public class VehicleActivity extends FragmentActivity{
         t4 = findViewById(R.id.textView04);
         t5 = findViewById(R.id.textView05);
 
+        //0. gör passengeraktivitet oh skicka in locations till vehicle activity. ?
+        // TODO 1. getNearbyVehicles ,1.1 kolla om tokn finns, annars generera, 1.2. hämta vehicles. 2. algoritmen..
+        //varför assync task?
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 String token = generateToken();
-                //TODO WAIT FOR ASSYNK TAST TO COMPLETE, THE NPROCEED:
                 Log.e("***** AccessToken is", token);
                 accessToken = token;
-                useToken ();
+                getNearbyVehicles (x1, x2, y1, y2);
             }
         });
     }
 
 
     public String generateToken (){
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                HttpsURLConnection connection = null;
-                try {
-                    URL url = new URL("https://api.vasttrafik.se/token");
-                    //perhaps HTTP instead since API specified "HTTP/1.1"?
-                    connection = (HttpsURLConnection) url.openConnection();
-                    connection.setRequestMethod("POST");
-                    byte[] myData = (apiKey + ":" + apiSecret).getBytes("utf-8");
-                    String keySecret64 = "Basic " + Base64.getEncoder().encodeToString(myData);
-                    connection.setRequestProperty ("Authorization", keySecret64);
-                    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                    connection.setRequestProperty("grant_type", "client_credentials"); //ta bort
-                    connection.setRequestProperty("scope", id); //ta bort
-                    connection.setDoOutput(true);
+        String token = "";
+        HttpsURLConnection connection = null;
+        try {
+            URL url = new URL("https://api.vasttrafik.se/token");
+            connection = (HttpsURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            byte[] myData = (apiKey + ":" + apiSecret).getBytes("utf-8");
+            String keySecret64 = "Basic " + Base64.getEncoder().encodeToString(myData);
+            connection.setRequestProperty ("Authorization", keySecret64); //header
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            connection.setRequestProperty("grant_type", "client_credentials");
+            connection.setRequestProperty("scope", id);
+            connection.setDoOutput(true);
 
-                    DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
-                    outputStream.writeBytes("grant_type=client_credentials&scope=device_1");
-                    outputStream.flush();
-                    outputStream.close();
-
-                    if (connection.getResponseCode() == 200 ){
-                        InputStream responseBody = connection.getInputStream();
-                        InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
-                        JsonReader jsonReader = new JsonReader(responseBodyReader);
-                        jsonReader.beginObject();
-                        while (jsonReader.hasNext()) {
-                            String key = jsonReader.nextName();
-                            if (key.equals("scope")) {
-                                String value = jsonReader.nextString();
-                                Log.e("RESPONSE_scope:", value);
-                            } else if (key.equals("token_type")) {
-                                String value = jsonReader.nextString();
-                                Log.e("RESPONSE_token_type:", value);
-                            } else if (key.equals("expires_in")) {
-                                String value = jsonReader.nextString();
-                                Log.e("RESPONSE_expires_in:", value);
-                            } else if (key.equals("refresh_token")) {
-                                String value = jsonReader.nextString();
-                                Log.e("RESPONSE_refresh_token:", value);
-                            } else if (key.equals("access_token")) {
-                                String value = jsonReader.nextString();
-                                Log.e("RESPONSE_access_token:", value);
-                                Log.e("RESPONSE_access_token*", "bbf2d518-8397-3d99-95e2-7d9dc234c4da");
-                            } else {
-                                String value = jsonReader.nextString();
-                                Log.e("RESPONSE_SURPRISE KEY:", value);
-                            }
-                        }
-                        jsonReader.close();
-                    } else{
-                        Log.e("****ERROR code", connection.getResponseMessage());
-                        //401 - unauthorized, token denied
-                        //403 - Forbidden
+            DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
+            outputStream.writeBytes("grant_type=client_credentials&scope=device_1");
+            outputStream.flush();
+            outputStream.close();
+            if (connection.getResponseCode() == 200 ){
+                InputStream responseBody = connection.getInputStream();
+                InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
+                JsonReader jsonReader = new JsonReader(responseBodyReader);
+                jsonReader.beginObject();
+                while (jsonReader.hasNext()) {
+                    String key = jsonReader.nextName();
+                    if (key.equals("token_type")) {
+                        String value = jsonReader.nextString();
+                        tokenType = value;
+                    } else if (key.equals("expires_in")) {
+                        String value = jsonReader.nextString();
+                        //TODO save expirty time, check time and use expiresin to get time
+                    } else if (key.equals("access_token")) {
+                        String value = jsonReader.nextString();
+                        token = value;
+                    } else {
+                        String value = jsonReader.nextString();
                     }
-                    connection.disconnect();
-                }catch (Exception e) {
-                    Log.e("****HTTPS","The https url connection failed. protocol- or IO exception");
                 }
+                jsonReader.close();
+            } else{
+                Log.e("****ERROR code", connection.getResponseMessage());
+                //401 - Unauthorized, Token has been denied
+                //403 - Forbidden, Missing or invalid request parameters
             }
-        }); //assync task!
-        //TODO WAIT FOR ASSYNK TASK (OR THREAD) TO FINISH AND THEN RETURN REAL ACCESS TOEKN
-        return "bbf2d518-8397-3d99-95e2-7d9dc234c4da";
-
-    }
-
-
-
-    public void useToken (){
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                HttpsURLConnection connection = null;
-                try {
-                    URL url = new URL("https://api.vasttrafik.se/bin/rest.exe/v2/location.name?input=ols&format=json");
-                    //perhaps HTTP instead since API specified "HTTP/1.1"?
-                    connection = (HttpsURLConnection) url.openConnection();
-                    connection.setRequestMethod("GET");
-                    connection.setRequestProperty ("Authorization", tokenType + " " + accessToken);
-                    connection.setDoOutput(true);
-
-                    DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
-                    outputStream.writeBytes("input=ols&format=json");
-                    outputStream.flush();
-                    outputStream.close();
-                    if (connection.getResponseCode() == 200 ){
-                        InputStream responseBody = connection.getInputStream();
-                        InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
-                        JsonReader jsonReader = new JsonReader(responseBodyReader);
-                        jsonReader.beginObject();
-                        while (jsonReader.hasNext()) {
-                            Log.e("_________", jsonReader.nextString());
-                        }
-                    } else{
-                        Log.e("****ERROR code", connection.getResponseMessage());
-                    }
-                    connection.disconnect();
-
-
-                }catch (Exception e) {
-                    Log.e("****HTTPS","The https url connection failed. protocol- or IO exception");
-                }
-            }
-        }); //assync task!
-
-
-
-
-
-
-
-
-        /*
-        URL url = new URL("https://api.vasttrafik.se/bin/rest.exe/v2" + key);
-        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-
-        connection.addRequestProperty("client_id", id);
-        connection.addRequestProperty("client_secret", secret);
-        connection.setRequestProperty("Authorization", "OAuth " + token);
-
-        //If the request returns an HTTP error code of 401, then your token has been denied
-        */
-    }
-
-
-
-
-    public void makeRequest (){
-        int minx = 11955000;
-        int maxx = 11954000;
-        int miny = 57721000;
-        int maxy = 57720000;
-        // WGS84 * 1000000 är typ x = 11954385, y=57720743
-        String onlyRealtime = "no";
-        //"yes" or "no" returns either positions based on realtime data only or positions from planned timetable data as well.
-        String cgiBinPath ="api.vasttrafik.se/bin/rest.exe/v2"; //?
-        try{
-            URL url = new URL("https://" + cgiBinPath +
-                    "/help.exe/eny?tpl=livemap&L=vs_livemap&minx=" + minx + "&maxx=" + maxx +
-                    "&miny=" + miny + "&maxy=" + maxy + "&onlyRealtime=" + onlyRealtime );
-        }catch (Exception e){
-            Log.e("****","):");
+            connection.disconnect();
+        }catch (Exception e) {
+            Log.e("****HTTPS","The https url connection failed. protocol- or IO exception");
         }
+        /*
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                //the whole connection thing above should be put her not to freeze UI/ app if the connection is slow
+                //but I need to wait for the response anyway, and the app is not commercial so it doesn't matter for now
+            }
+        }); //assync task!
+        */
+        return token;
     }
+
+
+    public void getNearbyVehicles (final int minx, final int maxx, final int miny, final int maxy){
+        //TODO you should check that the token hasn't expired and if so call generateToken()
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                HttpsURLConnection connection = null;
+                try {
+                    String endpoint = "https://api.vasttrafik.se/bin/rest.exe/v2/livemap";
+                    //"yes" below means only positions based on realtime data, no positions from planned timetable.
+                    String query = "?minx=" + minx + "&maxx=" + maxx + "&miny=" + miny + "&maxy=" + maxy + "&onlyRealtime=yes";
+                    URL url = new URL(endpoint + query);
+                    connection = (HttpsURLConnection) url.openConnection();
+                    connection.setRequestProperty("Authorization", tokenType + " " + accessToken);
+                    connection.setRequestProperty("Accept-Charset", "UTF-8");
+
+                    if (connection.getResponseCode() == 200 ){
+                        InputStream responseBody = connection.getInputStream();
+                        InputStreamReader responseBodyReader = new InputStreamReader(responseBody, StandardCharsets.UTF_8);
+                        JsonReader jsonReader = new JsonReader(responseBodyReader);
+                        jsonReader.beginObject();
+                        while (jsonReader.hasNext()) {
+                            Log.e("_________", "HURRA!");
+                            // ****HTTPS ERROR: java.lang.IllegalStateException: Expected a string but was NAME :
+                            //Log.e("_________", jsonReader.nextString());
+                        }
+                    } else{
+                        Log.e("****Failed to connect", "" );
+                        Log.e("****ERROR code",connection.getResponseCode() + "");
+                        Log.e("****ERROR msg", connection.getResponseMessage());
+                    }
+                    connection.disconnect();
+                }
+                catch (ProtocolException e) {
+                    Log.e("****HTTPS ERROR","Protocol Exception");
+                }
+                catch (MalformedURLException e) {
+                    Log.e("****HTTPS ERROR","Malformed URL Exception");
+                }
+                catch (UnsupportedEncodingException e) {
+                    Log.e("****HTTPS ERROR","Unsupported Encoding Exception");
+                }
+                catch (IOException e) {
+                    Log.e("****HTTPS ERROR","IO Exception");
+                }
+                catch (Exception e) {
+                    Log.e("****HTTPS ERROR","The https url connection failed for some unexpected reason.");
+                    Log.e("****HTTPS ERROR", e.toString());
+                }
+            }
+        }); //assync task!
+    }
+
+
 }
+
+
