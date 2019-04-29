@@ -49,6 +49,8 @@ public class LocationSaver {
         }
     }
 
+    //TODO:Skapa passenger objekt ?
+
     public void savePassengerLocation(Location location){
         String coordinate = coordinatePrettyPrint (location);
         String speed = speedPrettyPrint(location);
@@ -119,6 +121,14 @@ public class LocationSaver {
 
 
 }
+
+
+
+
+
+
+
+
 
 
         /* Skriv till databas:
