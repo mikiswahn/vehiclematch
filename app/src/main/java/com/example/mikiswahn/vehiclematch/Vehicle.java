@@ -1,40 +1,38 @@
 package com.example.mikiswahn.vehiclematch;
 
-import java.util.Date;
+import android.util.Log;
+import java.util.ArrayList;
+
+
+/* Class for a vehicle. */
 
 public class Vehicle {
-    String time;
-    //Date date; //time
-    String name; //vehicles.name
-    double lat; //vehicles.y
-    double lng; //vehicles.x
-    int bearing; //vehicles.direction
-    //final float speedkmh; //-
+    // Service GID, typ en specifik körning mellan ändhållplatser. Är alltså unik för linje, tid och riktning. ex. 9015014535800075
+    long gid;
+    // The name of the line
+    String name;
+    // A list of snapshots in time with location info
+    ArrayList<Snapshot> snapshots = new ArrayList<>();
     // "lcolor": "string",
-    //  "prodClass": "string",
+    //  "prodClass": "string", //kan användas ihop med name för att lista ut längden
     //  "bcolor": "string",
-    //  "gid": "string",
     //  "delay": 0,
 
 
-    public Vehicle (String name, double lat, double lng, int bearing){
-        //this.date = date;
-        // The name of the line
+    public Vehicle (long gid, String name, double lat, double lng, int bearing){
+        this.gid = gid;
         this.name = name;
-        this.lat = lat;
-        this.lng = lng;
-        // Bearing is an integer compass angle from 0 to 31
-        // N:8, E:16, S: 24, W:0 and 31 is W-ish
-        this.bearing = bearing;
+        snapshots.add(new Snapshot(lat, lng, bearing));
     }
 
-    public void setTime(String time) {
-        this.time = time;
+    public void addTime(String time){
+        if (snapshots.size() == 1){
+          snapshots.get(0).setTime(time);
+        }
+        else{
+            Log.e("*****SNAPSHOT","This action cannot be performed since the vehicle has multiple snapshots, or none");
+        }
     }
 
-    /*
-    public void setDate(Date date) {
-        this.date = date;
-    }
-    */
+
 }

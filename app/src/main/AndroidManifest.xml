@@ -29,7 +29,7 @@
 
         <!-- LocationActivity  VehicleActivity  MapsActivity  -->
         <activity
-            android:name=".VehicleActivity"
+            android:name=".LocationActivity"
             android:label="@string/title_activity_maps" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -1,6 +1,7 @@
 package com.example.mikiswahn.vehiclematch;
 
 import java.util.ArrayList;
+import java.lang.Math;
 import android.os.Bundle;
 import android.location.Location;
 import android.support.v4.app.FragmentActivity;
@@ -15,10 +16,21 @@ import com.google.android.gms.location.LocationSettingsRequest;
 
 
 
+//TODO: Readmefil som påpekar alla buggar pga inte kommersiell produkt 
+
 
 /* Class for collecting location data about a passenger. */
 
 public class LocationActivity extends FragmentActivity{
+
+    //D in report, in meters, based on GPS error and vehicle length
+    //private double MAX_DISTANCE_VEHICLE_PASSENGER = 35;
+    private double MAX_DISTANCE_VEHICLE_PASSENGER = 320; //For testing at lindholmen office
+    private double EARTH_RADIUS = 6363000; //meters
+    long ONESECOND = 1000;
+    long THREESECONDS = 3000;
+    //How often the passenger location will update
+    long locationIntervall = THREESECONDS;
 
     private LocationCallback locationCallback;
     private LocationRequest locationRequest;
@@ -26,6 +38,8 @@ public class LocationActivity extends FragmentActivity{
     public ArrayList<TextView> textUI = new ArrayList<>();
     private int count = 1;
     private LocationSaver locationSaver;
+    private VehicleTracker vehicleTracker = new VehicleTracker();
+
 
     @Override
     protected void onCreate (Bundle savedInstanceState){
@@ -42,18 +56,40 @@ public class LocationActivity extends FragmentActivity{
                 }
                 for (Location location : locationResult.getLocations()) {
                     printPassengerLocation(location);
+                    final double lat = location.getLatitude();
+                    final double lng = location.getLongitude();
+                    Integer[] boundingBox = getBoundingBox(lat, lng);
+                    vehicleTracker.getNearbyVehicles (boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3]);
+                    //TODO receive the vehicles and keep voting system.
                 }
             }
         };
         createLocationRequest();
     }
 
+    // Algorithm for offsetting a WGS84 position some meters along latitude or longitude
+    // https://stackoverflow.com/questions/2839533/adding-distance-to-a-gps-coordinate
+    // and API in getNearbyVehicles takes coordinates in WGS84*1000000
+    private Integer[] getBoundingBox(double lat, double lng){
+        final double offset_meters = MAX_DISTANCE_VEHICLE_PASSENGER / 2; //dx and dy
+        Integer[] boundingBox = {0,0,0,0};
+        //TODO: skriv i rapport om varför formeln nedan funkar. 1 rad = 1 * 180/ pi = 57.3.. deg
+        Double x1 = lng - (180/Math.PI) * (offset_meters/EARTH_RADIUS) / Math.cos(lat);
+        Double x2 = lng + (180/Math.PI) * (offset_meters/EARTH_RADIUS) / Math.cos(lat);
+        Double y1 = lat - (180/Math.PI) * (offset_meters/EARTH_RADIUS);
+        Double y2 = lat + (180/Math.PI) * (offset_meters/EARTH_RADIUS);
+        boundingBox[0] = (int) Math.round(x1*1000000);
+        boundingBox[1] = (int) Math.round(x2*1000000);
+        boundingBox[2] = (int) Math.round(y1*1000000);
+        boundingBox[3] = (int) Math.round(y2*1000000);
+        return boundingBox;
+    }
+
     protected void createLocationRequest() {
-        long onesecond = 1000;
         locationRequest = LocationRequest.create();
-        locationRequest.setInterval(onesecond); //när man kör appen blir det två sekunder..
-        locationRequest.setFastestInterval(onesecond);
-        //locationRequest.setMaxWaitTime(onesecond); varför blir det ännu långsammare med denna, typ 10-15 sek
+        locationRequest.setInterval(locationIntervall); //när man kör appen blir det två sekunder..
+        locationRequest.setFastestInterval(locationIntervall);
+        //locationRequest.setMaxWaitTime(lonationIntervall); varför blir det ännu långsammare med denna, typ 10-15 sek
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(locationRequest);
@@ -70,10 +106,10 @@ public class LocationActivity extends FragmentActivity{
     }
 
     public void printPassengerLocation(Location location){
-        int nrOfTextRows = 36;
+        int NR_OF_TEXT_ROWS = 36;
         int maxNrOfSnapshots = 120; //about two minutes of data, if collected every second
         locationSaver.savePassengerLocation(location);
-        if (count < nrOfTextRows) {
+        if (count < NR_OF_TEXT_ROWS) {
             locationSaver.printPassengerLocation(location, count);
         }
         count ++;

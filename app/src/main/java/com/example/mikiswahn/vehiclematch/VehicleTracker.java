@@ -1,38 +1,23 @@
 package com.example.mikiswahn.vehiclematch;
 
+import android.os.AsyncTask;
+import android.util.JsonReader;
+import android.util.Log;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
-import java.util.Date;
-import java.util.List;
-
 import javax.net.ssl.HttpsURLConnection;
-import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
-import android.util.JsonReader;
-import android.util.Log;
-import android.widget.TextView;
-import android.os.AsyncTask;
 
 
 
 /* Class for collecting location data from vehicles. */
 
-public class VehicleActivity extends FragmentActivity{
-
-    private TextView t1;
-    private TextView t2;
-    private TextView t3;
-    private TextView t4;
-    private TextView t5;
+public class VehicleTracker {
 
     private String apiKey = "gUcw2uf9fQJT9JMyyf43gWpyl9Ma";
     private String apiSecret = "Ay6or6sJCgDod_D102Sjio_Pt5ca";
@@ -55,30 +40,21 @@ public class VehicleActivity extends FragmentActivity{
     int gpsRadius;
 
 
-    @Override
-    protected void onCreate (Bundle savedInstanceState){
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_vehicle);
-        t1 = findViewById(R.id.textView01);
-        t2 = findViewById(R.id.textView02);
-        t3 = findViewById(R.id.textView03);
-        t4 = findViewById(R.id.textView04);
-        t5 = findViewById(R.id.textView05);
-
-        //TODO : Hämta 32 st varje sekund måla ut
-        //0. gör passengeraktivitet oh skicka in locations till vehicle activity. ?
-        // TODO 1. getNearbyVehicles ,1.1 kolla om tokn finns, annars generera, 1.2. hämta vehicles. 2. algoritmen..
-        //varför assync task?
+    public VehicleTracker(){
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 String token = generateToken();
                 Log.e("***** AccessToken is", token);
                 accessToken = token;
-                getNearbyVehicles (x1, x2, y1, y2);
             }
         });
     }
+
+
+        // TODO : JÄTTEVIKGIT ATT KOLLA ATT TOKEN GILITG!!!!!!!!!!!! CHANSA ITE PÅ EXEKVERINGSTID !!!!
+        // TODO 1. getNearbyVehicles ,1.1 kolla om tokn finns, annars generera,
+
 
 
     public String generateToken (){
@@ -130,25 +106,17 @@ public class VehicleActivity extends FragmentActivity{
         }catch (Exception e) {
             Log.e("****HTTPS","The https url connection failed. protocol- or IO exception");
         }
-        /*
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                //the whole connection thing above should be put her not to freeze UI/ app if the connection is slow
-                //but I need to wait for the response anyway, and the app is not commercial so it doesn't matter for now
-            }
-        }); //assync task!
-        */
         return token;
     }
 
 
-
-    //TODO: Bearing of passengeer and vehile are incompatible !! 0-31 & 0- 360.
-
-
+    //TODO ADD BEARING AND TIME (ETC?) TO COMPARE WITH, FROM PASSENGER
+    //@param: Longitudes (x) and latitudes (y) to query vehicles within bounding box
+    //minx = left border, maxx = right border, miny = lower border, maxy = upper boarder, all in WGS84*1000000
     public void getNearbyVehicles (final int minx, final int maxx, final int miny, final int maxy){
         //TODO you should check that the token hasn't expired and if so call generateToken()
+
+        Log.e("**** fetching vehicles inside:" , minx + " " + maxx + " " + miny + " " + maxy);
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
@@ -168,8 +136,9 @@ public class VehicleActivity extends FragmentActivity{
                         JsonReader jsonReader = new JsonReader(responseBodyReader);
                         ArrayList<Vehicle> vehicles = parseVehicles(jsonReader);
                         for (Vehicle v : vehicles) {
-                            Log.e("****VEHICLE", v.name +", ("+ v.lng +", "+ v.lat +"), "+ v.bearing +", "+ v.time);
+                            Log.e("****VEHICLE", "\n"+ v.name +", "+ v.gid + "\n" ); //("+ v.lng +", "+ v.lat +"), "+ v.bearing +", "+ v.time);
                         }
+                        //TODO Return the list of vehicles to add to the toplist
                         jsonReader.close();
                     } else{
                         Log.e("****Failed to connect", "" );
@@ -199,6 +168,7 @@ public class VehicleActivity extends FragmentActivity{
                         String nameVeh = jsonReader.nextName();
                         if (nameVeh.equals("vehicles")){
                             jsonReader.beginArray();
+                            Log.e("****", "parsing vehicles, if any");
                             while (jsonReader.hasNext()) {
                                 jsonReader.beginObject();
                                 vehicles.add(readVehicle(jsonReader));
@@ -226,7 +196,7 @@ public class VehicleActivity extends FragmentActivity{
             Log.e("****JSON ERROR", e.toString());
         }
         for (Vehicle v : vehicles) {
-            v.setTime(time);
+            v.addTime(time);
         }
         return vehicles;
         //* If a value may be null, you should first check using peek(). Null literals can be consumed using either nextNull() or skipValue().
@@ -236,6 +206,7 @@ public class VehicleActivity extends FragmentActivity{
 
 
     public Vehicle readVehicle (JsonReader reader) {
+        long gid = -1;
         String vehicleName = null; //vehicles.name
         double lat = -1; //vehicles.y
         double lng = -1; //vehicles.x
@@ -251,6 +222,8 @@ public class VehicleActivity extends FragmentActivity{
                     lat = Double.parseDouble(y.substring(0,2) + "." + y.substring(2));
                 } else if (name.equals ("name")){
                     vehicleName  = reader.nextString();
+                } else if (name.equals ("gid")){
+                    gid  = Long.parseLong(reader.nextString());
                 } else if (name.equals ("direction")){
                     bearing  = Integer.parseInt(reader.nextString());
                 } else {
@@ -261,7 +234,7 @@ public class VehicleActivity extends FragmentActivity{
             Log.e("****JSON ERROR", "unknown inner");
             Log.e("****JSON ERROR", e.toString());
         }
-        Vehicle vehicle= new Vehicle (vehicleName, lat, lng, bearing);
+        Vehicle vehicle= new Vehicle (gid, vehicleName, lat, lng, bearing);
         return vehicle;
     }
 
