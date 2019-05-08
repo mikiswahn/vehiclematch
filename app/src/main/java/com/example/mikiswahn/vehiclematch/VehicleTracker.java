@@ -15,9 +15,18 @@ import javax.net.ssl.HttpsURLConnection;
 
 
 
+//TODO TA BORT DENNA KLASS
+
+
+
+
+
+
 /* Class for collecting location data from vehicles. */
 
 public class VehicleTracker {
+
+/**
 
     private String apiKey = "gUcw2uf9fQJT9JMyyf43gWpyl9Ma";
     private String apiSecret = "Ay6or6sJCgDod_D102Sjio_Pt5ca";
@@ -34,11 +43,6 @@ public class VehicleTracker {
     int y1 = 57706108;
     int y2 = 57709250;
 
-    //The radius in meters around a passenger where their vehicle is assumed to be within
-    int raduis = 50; //= variable D in alg.
-    //which translates to the following addition to a GPS coordinate in WGS84 * 1000000
-    int gpsRadius;
-
 
     public VehicleTracker(){
         AsyncTask.execute(new Runnable() {
@@ -54,6 +58,7 @@ public class VehicleTracker {
 
         // TODO : JÄTTEVIKGIT ATT KOLLA ATT TOKEN GILITG!!!!!!!!!!!! CHANSA ITE PÅ EXEKVERINGSTID !!!!
         // TODO 1. getNearbyVehicles ,1.1 kolla om tokn finns, annars generera,
+        // TODO DESUTOM GÖR DU JU FLERA CALLS PÅ SAMMA GERERERADE TOKEN
 
 
 
@@ -135,6 +140,7 @@ public class VehicleTracker {
                         InputStreamReader responseBodyReader = new InputStreamReader(responseBody, StandardCharsets.UTF_8);
                         JsonReader jsonReader = new JsonReader(responseBodyReader);
                         ArrayList<Vehicle> vehicles = parseVehicles(jsonReader);
+                        //this.vehicles = parseVehicles(jsonReader);
                         for (Vehicle v : vehicles) {
                             Log.e("****VEHICLE", "\n"+ v.name +", "+ v.gid + "\n" ); //("+ v.lng +", "+ v.lat +"), "+ v.bearing +", "+ v.time);
                         }
@@ -154,6 +160,8 @@ public class VehicleTracker {
             }
         }); //assync task!
     }
+
+
 
     public ArrayList<Vehicle> parseVehicles (JsonReader jsonReader){
         ArrayList<Vehicle> vehicles = new ArrayList<>();
@@ -234,10 +242,10 @@ public class VehicleTracker {
             Log.e("****JSON ERROR", "unknown inner");
             Log.e("****JSON ERROR", e.toString());
         }
-        Vehicle vehicle= new Vehicle (gid, vehicleName, lat, lng, bearing);
+        Vehicle vehicle= new Vehicle (-1, gid, vehicleName, lat, lng, bearing);
         return vehicle;
     }
 
-
+*/
 
 }

@@ -4,33 +4,35 @@ import android.util.Log;
 import java.util.ArrayList;
 
 
-/* Class for a vehicle. */
+/* Class for a vehicle for a particular time and location. */
 
 public class Vehicle {
-    // Service GID, typ en specifik körning mellan ändhållplatser. Är alltså unik för linje, tid och riktning. ex. 9015014535800075
+    Integer passengerSnapshotId;
+    // Service GID, typ en specifik körning, mellan ändhållplatser typ. Är alltså unik för linje, tid och riktning. ex. 9015014535800075
     long gid;
     // The name of the line
     String name;
     // A list of snapshots in time with location info
-    ArrayList<Snapshot> snapshots = new ArrayList<>();
+    Snapshot snapshot;
     // "lcolor": "string",
     //  "prodClass": "string", //kan användas ihop med name för att lista ut längden
     //  "bcolor": "string",
     //  "delay": 0,
 
 
-    public Vehicle (long gid, String name, double lat, double lng, int bearing){
+    public Vehicle (Integer passengerSnapshotId, long gid, String name, double lat, double lng, int bearing){
+        this.passengerSnapshotId = passengerSnapshotId;
         this.gid = gid;
         this.name = name;
-        snapshots.add(new Snapshot(lat, lng, bearing));
+        snapshot = new Snapshot(lat, lng, bearing);
     }
 
     public void addTime(String time){
-        if (snapshots.size() == 1){
-          snapshots.get(0).setTime(time);
+        if (snapshot != null){
+          snapshot.setTime(time);
         }
         else{
-            Log.e("*****SNAPSHOT","This action cannot be performed since the vehicle has multiple snapshots, or none");
+            Log.e("*****SNAPSHOT","This action cannot be performed since the vehicle has no snapshots");
         }
     }
 

@@ -23,6 +23,7 @@ public class LocationSaver {
     public ArrayList<TextView> textUI;
     private File file;
 
+    private Integer vecicleRow = 20;
 
     public LocationSaver(ArrayList<TextView> textUI, Context context){
         this.textUI = textUI;
@@ -31,12 +32,21 @@ public class LocationSaver {
         }
     }
 
+    public void printVehicles (String vehicleNames){
+        int nrOfTextRowsVeh = 36;
+        if (vecicleRow < nrOfTextRowsVeh) {
+            TextView text = textUI.get(vecicleRow-1);
+            text.setText(vehicleNames);
+            vecicleRow++;
+        }
+    }
+
     //Bundle extra = location.getExtras();
     //information in K/V-pairs, such as satellites - the number of satellites used to derive the fix
     //String provider = location.getProvider();
     //Returns the name of the provider that generated this fix (dvs.location fix). typ gps antar jag?
     public void printPassengerLocation(Location location, int count){
-        int nrOfTextRows = 36;
+        int nrOfTextRows = 20;
         String coordinate = coordinatePrettyPrint (location);
         String speed = speedPrettyPrint(location);
         final float bearing = location.getBearing();
@@ -107,7 +117,6 @@ public class LocationSaver {
         String longDate = date.toString();
         return longDate.substring(11, 19);
     }
-
     //date.toString() -> "Thu Mar 21 16:03:20 GMT+01:00 2019"
 
     public String fileNameWithDate(){
