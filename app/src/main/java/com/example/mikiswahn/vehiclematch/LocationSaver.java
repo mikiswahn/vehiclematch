@@ -42,7 +42,7 @@ public class LocationSaver {
             //don't waste UI space with empty vehicle sets
         }
         else {
-            String outprint = vehicleListPrettyPrint(vehicles, true);
+            String outprint = vehicleListPrettyPrint(vehicles);
             if (rowCursor <= MAX_ROW_INDEX) {
                 TextView row = textRows.get(rowCursor);
                 row.setText(outprint);
@@ -69,7 +69,7 @@ public class LocationSaver {
             outprint = ( time + " | " + passnpID + " | " + "No vehicles nearby" + "\n" );
         }
         else {
-            outprint = vehicleListPrettyPrint(vehicles,false ) + "\n";
+            outprint = vehicleListPrettyPrint(vehicles) + "\n";
         }
         writeToFile(fileVehicles, outprint);
     }
@@ -135,7 +135,7 @@ public class LocationSaver {
     }
 
 
-    public String vehicleListPrettyPrint(ArrayList<Vehicle> vehicles, Boolean printOnUI) {
+    public String vehicleListPrettyPrint(ArrayList<Vehicle> vehicles) {
         String passnpID = "" + vehicles.get(0).passengerSnapshotId;
         String time = vehicles.get(0).snapshot.getTime();
         String vehicleNames = "";
@@ -144,12 +144,7 @@ public class LocationSaver {
         }
         int indexOfComma = vehicleNames.length() - 2 ;
         vehicleNames = vehicleNames.substring(0, indexOfComma);
-        if (printOnUI){
-            return ( vehicleNames + " | " + time + " | " + passnpID );
-        }
-        else{
-            return ( time + " | " + passnpID + " | " + vehicleNames );
-        }
+        return ( time + " | " + passnpID + " | " + vehicleNames );
     }
 
     public String fileNameWithDate(Boolean isSnapshot){

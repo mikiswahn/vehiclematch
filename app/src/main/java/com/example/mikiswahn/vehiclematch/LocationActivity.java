@@ -66,7 +66,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                     return;
                 }
                 for (Location location : locationResult.getLocations()) {
-                    final Integer passengerSnapshotId = passengerSnapshotIdCount++; //TODO NU KOMMER DEN BÖRJA PÅ TVÅ FÖR SIDE EFFECT HÄNDER FÖRE ASSIGN, INITIERA MED 0 INTE 1
+                    final Integer passengerSnapshotId = passengerSnapshotIdCount++;
                     savePassengerLocation(location, passengerSnapshotId);
                     Log.e("****LOCATION:", "Discard?");
                     if (discardedCounter > DISCARD_INITIAL_LOCATIONS){
@@ -128,6 +128,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
         boundingBox[3] = (int) Math.round(y2*1000000);
         return boundingBox;
     }
+
 
 
     protected void createLocationRequest() {

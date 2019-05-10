@@ -7,17 +7,12 @@ public class Snapshot {
     private String time;
     private double lat;
     private double lng;
-    // Bearing is an integer compass angle from 0 to 31
-    // N:8, E:16, S: 24, W:0 and ish 31
-    private int bearing;
-    // The distance to the pasenger at tihis point in time.
     private double distanceToPassenger; //TODO
 
 
-    public Snapshot (double lat, double lng, int bearing){
+    public Snapshot (double lat, double lng){
         this.lat = lat;
         this.lng = lng;
-        this.bearing = bearing;
     }
 
     public void setTime(String time) {
@@ -33,7 +28,6 @@ public class Snapshot {
         this.time = "";
         this.lat = 0;
         this.lng = 0;
-        this.bearing = 0;
         this.distanceToPassenger = 9000;
     }
 

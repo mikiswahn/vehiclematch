@@ -40,7 +40,7 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
     @Override
     protected void onPostExecute(ArrayList<Vehicle> result){
         for (Vehicle v : result) {
-            Log.e("**** VEHICLE ", "\n"+ v.name +", "+ v.gid + "\n"); // + v.lng +", "+ v.lat +"), "+ v.time);
+            Log.e("**** VEHICLE ", "\n"+ v.name +", "+ v.gid + "\n");
         }
         //Will feed vehicles back to main thread (LocationActivity class, processFinish method).
         middleman.processFinish(result);
@@ -149,7 +149,6 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
         String vehicleName = "erronous vehicle"; //vehicles.name
         double lat = -1; //vehicles.y
         double lng = -1; //vehicles.x
-        int bearing = -1; //vehicles.direction
         try {
             while(reader.hasNext()){
                 String name = reader.nextName();
@@ -163,8 +162,6 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
                     vehicleName  = reader.nextString();
                 } else if (name.equals ("gid")){
                     gid  = Long.parseLong(reader.nextString());
-                } else if (name.equals ("direction")){
-                    bearing  = Integer.parseInt(reader.nextString());
                 } else {
                     reader.skipValue();
                 }
@@ -173,7 +170,7 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
             Log.e("****JSON ERROR", "unknown inner");
             Log.e("****JSON ERROR", e.toString());
         }
-        Vehicle vehicle= new Vehicle (passengerSnapshotId, gid, vehicleName, lat, lng, bearing);
+        Vehicle vehicle= new Vehicle (passengerSnapshotId, gid, vehicleName, lat, lng);
         return vehicle;
     }
 

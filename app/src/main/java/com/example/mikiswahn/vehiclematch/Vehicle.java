@@ -7,6 +7,7 @@ import java.util.ArrayList;
 /* Class for a vehicle for a particular time and location. */
 
 public class Vehicle {
+    //From which passenger snapshot this vehicle was queried
     Integer passengerSnapshotId;
     // Service GID, typ en specifik körning, mellan ändhållplatser typ. Är alltså unik för linje, tid och riktning. ex. 9015014535800075
     long gid;
@@ -15,16 +16,16 @@ public class Vehicle {
     // A list of snapshots in time with location info
     Snapshot snapshot;
     // "lcolor": "string",
-    //  "prodClass": "string", //kan användas ihop med name för att lista ut längden
+    //  "prodClass": "string", //kan användas ihop med name för att lista ut längden på fordonet. användbart för gps.
     //  "bcolor": "string",
     //  "delay": 0,
 
 
-    public Vehicle (Integer passengerSnapshotId, long gid, String name, double lat, double lng, int bearing){
+    public Vehicle (Integer passengerSnapshotId, long gid, String name, double lat, double lng){
         this.passengerSnapshotId = passengerSnapshotId;
         this.gid = gid;
         this.name = name;
-        snapshot = new Snapshot(lat, lng, bearing);
+        snapshot = new Snapshot(lat, lng);
     }
 
     public void addTime(String time){
