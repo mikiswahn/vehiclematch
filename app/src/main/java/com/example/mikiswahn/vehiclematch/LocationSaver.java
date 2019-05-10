@@ -38,11 +38,11 @@ public class LocationSaver {
     }
 
     public void printVehicles(ArrayList<Vehicle> vehicles) {
-        if (vehicles.get(0).name.equals("No Vehicles returned for this request")){
-            // Nah, don't waste UI space with empty vehicle sets
+        if (vehicles.get(0).name.equals("No vehicles nearby")){
+            //don't waste UI space with empty vehicle sets
         }
         else {
-            String outprint = vehicleListPrettyPrint(vehicles);
+            String outprint = vehicleListPrettyPrint(vehicles, true);
             if (rowCursor <= MAX_ROW_INDEX) {
                 TextView row = textRows.get(rowCursor);
                 row.setText(outprint);
@@ -66,10 +66,10 @@ public class LocationSaver {
         if (vehicles.get(0).name.equals("No vehicles nearby")){
             String passnpID = "" + vehicles.get(0).passengerSnapshotId;
             String time = vehicles.get(0).snapshot.getTime();
-            outprint = ("No vehicles nearby" + " | " + time + " | " + passnpID + "\n");
+            outprint = ( time + " | " + passnpID + " | " + "No vehicles nearby" + "\n" );
         }
         else {
-            outprint = vehicleListPrettyPrint(vehicles);
+            outprint = vehicleListPrettyPrint(vehicles,false ) + "\n";
         }
         writeToFile(fileVehicles, outprint);
     }
@@ -135,15 +135,21 @@ public class LocationSaver {
     }
 
 
-    public String vehicleListPrettyPrint(ArrayList<Vehicle> vehicles) {
+    public String vehicleListPrettyPrint(ArrayList<Vehicle> vehicles, Boolean printOnUI) {
         String passnpID = "" + vehicles.get(0).passengerSnapshotId;
         String time = vehicles.get(0).snapshot.getTime();
         String vehicleNames = "";
         for (Vehicle v : vehicles) {
             vehicleNames = vehicleNames + v.name + ", ";
         }
-        String outprint = vehicleNames + "| " + time + " | " + passnpID;
-        return outprint;
+        int indexOfComma = vehicleNames.length() - 2 ;
+        vehicleNames = vehicleNames.substring(0, indexOfComma);
+        if (printOnUI){
+            return ( vehicleNames + " | " + time + " | " + passnpID );
+        }
+        else{
+            return ( time + " | " + passnpID + " | " + vehicleNames );
+        }
     }
 
     public String fileNameWithDate(Boolean isSnapshot){
