@@ -16,69 +16,83 @@ import android.content.Context;
 
 
 
-/* Class for updating UI/Database/File with location data. */
+/* Class for updating txt-file & UI with location data. */
+
 
 public class LocationSaver {
 
-    public ArrayList<TextView> textUI;
-    private File file;
+    public ArrayList<TextView> textRows;
+    private Integer MAX_ROW_INDEX = 34; //there are 35 text rows
+    private Integer rowCursor = 1; //begins at one since index 0 is reserved:
+    private TextView firstRow;
+    private File filePassenger;
+    private File fileVehicles;
 
-    private Integer vecicleRow = 20;
 
-    public LocationSaver(ArrayList<TextView> textUI, Context context){
-        this.textUI = textUI;
-        if(isExternalStorageWritable()){
+    public LocationSaver(ArrayList<TextView> textRows, Context context) {
+        this.textRows = textRows;
+        firstRow = textRows.get(0);
+        if (isExternalStorageWritable()) {
             getPublicAlbumStorageDir("vehiclematch", context);
         }
     }
 
-    public void printVehicles (String vehicleNames){
-        int nrOfTextRowsVeh = 36;
-        if (vecicleRow < nrOfTextRowsVeh) {
-            TextView text = textUI.get(vecicleRow-1);
-            text.setText(vehicleNames);
-            vecicleRow++;
+    public void printVehicles(ArrayList<Vehicle> vehicles) {
+        if (vehicles.get(0).name.equals("No Vehicles returned for this request")){
+            // Nah, don't waste UI space with empty vehicle sets
+        }
+        else {
+            String outprint = vehicleListPrettyPrint(vehicles);
+            if (rowCursor <= MAX_ROW_INDEX) {
+                TextView row = textRows.get(rowCursor);
+                row.setText(outprint);
+                rowCursor++;
+            }
         }
     }
 
-    //Bundle extra = location.getExtras();
-    //information in K/V-pairs, such as satellites - the number of satellites used to derive the fix
-    //String provider = location.getProvider();
-    //Returns the name of the provider that generated this fix (dvs.location fix). typ gps antar jag?
-    public void printPassengerLocation(Location location, int count){
-        int nrOfTextRows = 20;
-        String coordinate = coordinatePrettyPrint (location);
+    public void printPassengerLocation(Location location, int passnpID) {
+        String coordinate = coordinatePrettyPrint(location);
         String speed = speedPrettyPrint(location);
-        final float bearing = location.getBearing();
         String time = timePrettyPrint(location);
+        String snapshot = ("Last: " + coordinate + " | " + speed + " km/h | " + time + " | " + passnpID);
+        firstRow.setText(snapshot);
+    }
+    //Bundle extra = location.getExtras(); -> information in K/V-pairs, such as satellites - the number of satellites used to derive the fix
+    //String provider = location.getProvider(); ->Returns the name of the provider that generated this fix (dvs.location fix). typ gps antar jag?
 
-        String snapshot = (coordinate + " | " + speed + " km/h | " + Float.toString(bearing) + " | " + time);
-        if (count < nrOfTextRows) {
-            TextView text = textUI.get(count-1);
-            text.setText(snapshot);
+    public void saveVehicles(ArrayList<Vehicle> vehicles){
+        String outprint = "";
+        if (vehicles.get(0).name.equals("No vehicles nearby")){
+            String passnpID = "" + vehicles.get(0).passengerSnapshotId;
+            String time = vehicles.get(0).snapshot.getTime();
+            outprint = ("No vehicles nearby" + " | " + time + " | " + passnpID + "\n");
         }
+        else {
+            outprint = vehicleListPrettyPrint(vehicles);
+        }
+        writeToFile(fileVehicles, outprint);
     }
 
-    //TODO:Skapa passenger objekt ?
-
-    public void savePassengerLocation(Location location){
+    public void savePassengerLocation(Location location, int passnpID){
         String coordinate = coordinatePrettyPrint (location);
         String speed = speedPrettyPrint(location);
-        final float bearing = location.getBearing();
         String time = timePrettyPrint(location);
-        String snapshot = (coordinate + " | " + speed + " | " + Float.toString(bearing) + " | " + time + "\n");
+        String snapshot = (coordinate + " | " + speed + " | " + time + " | " + passnpID + "\n");
+        writeToFile(filePassenger, snapshot);
+    }
 
+    public void writeToFile(File file, String text){
         if(isExternalStorageWritable()){
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file, true));
-                writer.append(snapshot);
+                writer.append(text);
                 writer.close();
             } catch (Exception e) {
                 e.printStackTrace();
                 Log.e("**** filesystem", "failed to write to file");
             }
         }
-        //eller Skriv till databas: *
     }
 
     public boolean isExternalStorageWritable() {
@@ -91,8 +105,10 @@ public class LocationSaver {
         File path = new File(pathExternalStorage, albumName);
         path.mkdirs();
         MediaScannerConnection.scanFile(context, new String[] {path.toString()}, null, null);
-        String fullFilename = fileNameWithDate();
-        file = new File(path, fullFilename);
+        String fullFilenameP = fileNameWithDate(true);
+        String fullFilenameV = fileNameWithDate(false);
+        filePassenger = new File(path, fullFilenameP);
+        fileVehicles = new File(path, fullFilenameV);
     }
 
     public String coordinatePrettyPrint (Location location){
@@ -114,54 +130,35 @@ public class LocationSaver {
     public String timePrettyPrint(Location location){
         long timestamp = location.getTime();
         Date date = new Date(timestamp);
-        String longDate = date.toString();
+        String longDate = date.toString(); // -> "Thu Mar 21 16:03:20 GMT+01:00 2019"
         return longDate.substring(11, 19);
     }
-    //date.toString() -> "Thu Mar 21 16:03:20 GMT+01:00 2019"
 
-    public String fileNameWithDate(){
+
+    public String vehicleListPrettyPrint(ArrayList<Vehicle> vehicles) {
+        String passnpID = "" + vehicles.get(0).passengerSnapshotId;
+        String time = vehicles.get(0).snapshot.getTime();
+        String vehicleNames = "";
+        for (Vehicle v : vehicles) {
+            vehicleNames = vehicleNames + v.name + ", ";
+        }
+        String outprint = vehicleNames + "| " + time + " | " + passnpID;
+        return outprint;
+    }
+
+    public String fileNameWithDate(Boolean isSnapshot){
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Europe/Stockholm"));
         Date dateO = cal.getTime();
-        String dateS = dateO.toString();
-        String date = dateS.substring(0, 13) + dateS.substring(14, 16); //filename without ':'
-        return "snapshots_" + date + ".txt";
+        String dateS = dateO.toString(); //-> "Thu Mar 21 16:03:20 GMT+01:00 2019"
+        String date = dateS.substring(0, 13) + dateS.substring(14, 16); //filename mus be without ':'
+        if (isSnapshot){
+            return date + " passenger" + ".txt";
+        }
+        else{
+            return date + " vehicles" + ".txt";
+        }
     }
 
 
 }
-
-
-
-
-
-
-
-
-
-
-        /* Skriv till databas:
-        // lägg till: import static com.example.mikiswahn.vehiclematch.AppDatabase.getAppDatabase;
-        Context context = LocationActivity.this;
-        final AppDatabase passengerDb = getAppDatabase(context);
-
-        //Always use a Thread or AsyncTask for db calls, or the app will crash
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Passenger passenger = new Passenger();
-                passenger.setPid(0); //från 0 till 120 st typ, så har man 2 min data
-                passenger.setLng(lat);
-                passenger.setLat(lng);
-                passenger.setVelocity(speedkmh);
-                passenger.setBearing(bearing);
-                passengerDb.passengerDao().insert(passenger);
-                //testa metoden List<Passenger> getAll(); från passengerdao för att posta data från db
-            }
-        }) .start();
-        // läs mer på
-        // https://developer.android.com/training/data-storage/room
-        // https://codelabs.developers.google.com/codelabs/android-room-with-a-view/#11
-        // https://medium.com/androiddevelopers/7-steps-to-room-27a5fe5f99b2
-        // https://medium.freecodecamp.org/room-sqlite-beginner-tutorial-2e725e47bfab
-        */

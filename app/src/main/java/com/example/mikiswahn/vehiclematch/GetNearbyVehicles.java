@@ -40,7 +40,7 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
     @Override
     protected void onPostExecute(ArrayList<Vehicle> result){
         for (Vehicle v : result) {
-            Log.e("**** VEHICLE ", "\n"+ v.name +", "+ v.gid + "\n"); // + v.lng +", "+ v.lat +"), "+ v.bearing +", "+ v.time);
+            Log.e("**** VEHICLE ", "\n"+ v.name +", "+ v.gid + "\n"); // + v.lng +", "+ v.lat +"), "+ v.time);
         }
         //Will feed vehicles back to main thread (LocationActivity class, processFinish method).
         middleman.processFinish(result);
@@ -75,9 +75,6 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
                 InputStreamReader responseBodyReader = new InputStreamReader(responseBody, StandardCharsets.UTF_8);
                 JsonReader jsonReader = new JsonReader(responseBodyReader);
                 vehicles = parseVehicles(passengerSnapshotId, jsonReader);
-                /*for (Vehicle v : vehicles) {
-                    Log.e("****VEHICLE", "\n"+ v.name +", "+ v.gid + "\n" ); //("+ v.lng +", "+ v.lat +"), "+ v.bearing +", "+ v.time);
-                }*/
                 jsonReader.close();
             } else{
                 Log.e("****Failed to connect", "" );
@@ -134,13 +131,16 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
             Log.e("****JSON ERROR", "unknown outer");
             Log.e("****JSON ERROR", e.toString());
         }
+        if (vehicles.size() == 0){
+            //If there are no vehicles, put an "empty vehicle" in the list such that passengerSnaphotId can be returned. (We want to know for which request no vehicles were returned)
+            vehicles.add( new Vehicle (passengerSnapshotId));
+        }
         for (Vehicle v : vehicles) {
             v.addTime(time);
         }
         return vehicles;
-        //* If a value may be null, you should first check using peek(). Null literals can be consumed using either nextNull() or skipValue().
-        //ex. else if (name.equals("geo") && reader.peek() != JsonToken.NULL) {
-        //    geo = readDoublesArray(reader);
+        //*JSON: If a value may be null, you should first check using peek(). Null literals can be consumed using either nextNull() or skipValue().
+        //ex. else if (name.equals("geo") && reader.peek() != JsonToken.NULL) {geo = readDoublesArray(reader);}
     }
 
 
@@ -176,6 +176,8 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
         Vehicle vehicle= new Vehicle (passengerSnapshotId, gid, vehicleName, lat, lng, bearing);
         return vehicle;
     }
+
+
 
 
 

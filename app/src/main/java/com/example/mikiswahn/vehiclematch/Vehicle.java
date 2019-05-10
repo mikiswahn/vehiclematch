@@ -32,8 +32,17 @@ public class Vehicle {
           snapshot.setTime(time);
         }
         else{
-            Log.e("*****SNAPSHOT","This action cannot be performed since the vehicle has no snapshots");
+            Log.e("*****SNAPSHOT","Yo can't set the time since the vehicle snapshot is null");
         }
+    }
+
+    //"empty vehicle" constructor
+    public Vehicle (Integer passengerSnapshotId){
+        this.passengerSnapshotId = passengerSnapshotId;
+        this.name = "No vehicles nearby"; //This should be a string resource in the android project, but whatever
+        this.gid = 0;
+        snapshot = new Snapshot();
+
     }
 
 

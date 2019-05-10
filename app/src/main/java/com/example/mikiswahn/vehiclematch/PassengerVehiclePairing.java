@@ -8,7 +8,7 @@ public class PassengerVehiclePairing {
     String passengerTime;
     double passengerLat;
     double passengerLng;
-    double passengerBearing;
+    //double passengerBearing;
     ArrayList<Vehicle> vehicles;
     ArrayList<Vehicle> topCandidates;
 
@@ -28,7 +28,7 @@ public class PassengerVehiclePairing {
 
     // keep track of vehicle gid.
     public void computeTopCandidate(){
-        //Find the (top 3?) vehicle(s) that are most likely to be the one the passenger is onboard.
+        //-todo Find the (top 3?) vehicle(s) that are most likely to be the one the passenger is onboard.
     }
 
 

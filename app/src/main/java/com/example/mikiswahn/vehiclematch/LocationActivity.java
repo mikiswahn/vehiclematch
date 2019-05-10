@@ -3,7 +3,6 @@ package com.example.mikiswahn.vehiclematch;
 import java.util.ArrayList;
 import java.lang.Math;
 import java.util.Date;
-import java.util.UUID;
 
 import android.os.Bundle;
 import android.location.Location;
@@ -28,22 +27,26 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
 
     //The radius in meters around a passenger where their vehicle is assumed to be within
     //D in report, in meters, based on GPS error and max vehicle length
-    //private double MAX_DISTANCE_VEHICLE_PASSENGER = 35;
+    //private double MAX_DISTANCE_VEHICLE_PASSENGER = 60;
     private double MAX_DISTANCE_VEHICLE_PASSENGER = 320; //For testing at lindholmen office
     private double EARTH_RADIUS = 6363000; //meters
     long ONESECOND = 1000;
     long THREESECONDS = 3000;
     //How often the passenger location will update
     long locationIntervall = THREESECONDS;
+    // the first 18(?) locations will only be recorded in the txt file but never used for matching. (empirical tests showed that no vehicle data was retrieved for initial positions)
+    Integer DISCARD_INITIAL_LOCATIONS = 8;
+    Integer discardedCounter = 1;
 
     private LocationCallback locationCallback;
     private LocationRequest locationRequest;
     private FusedLocationProviderClient fusedLocationClient;
     public ArrayList<TextView> textUI = new ArrayList<>();
-    private int count = 1;
+    private int countSnapshots = 1;
+    int maxNrOfSnapshots = 120; //about two minutes of data, if collected every second
     private LocationSaver locationSaver;
-    //The passengerSnapshotID is a unique ID for a passenger snapshot (time and location),
-    // used for pairing an API vehicle response with the right passenger position that initiated the query
+    // The passengerSnapshotID is a unique ID for a passenger snapshot (time and location),
+    // used for pairing an API vehicle response with the right passenger position initiating the query
     private Integer passengerSnapshotIdCount = 1;
     private ArrayList<PassengerVehiclePairing> pairings = new ArrayList<>();
 
@@ -63,16 +66,24 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                     return;
                 }
                 for (Location location : locationResult.getLocations()) {
-                    printPassengerLocation(location);
-                    final Integer passengerSnapshotId = passengerSnapshotIdCount++;
-                    final double lat = location.getLatitude();
-                    final double lng = location.getLongitude();
-                    Date dateUTC = new Date(location.getTime());
-                    String date = dateUTC.toString(); //date.toString() -> "Thu Mar 21 16:03:20 GMT+01:00 2019"
-                    String time = date.substring(11, 19);
-                    pairings.add(new PassengerVehiclePairing(passengerSnapshotId, time, lat, lng));
-                    Integer[] boundingBox = getBoundingBox(lat, lng);
-                    fetchVehicles(passengerSnapshotId, boundingBox);
+                    final Integer passengerSnapshotId = passengerSnapshotIdCount++; //TODO NU KOMMER DEN BÖRJA PÅ TVÅ FÖR SIDE EFFECT HÄNDER FÖRE ASSIGN, INITIERA MED 0 INTE 1
+                    savePassengerLocation(location, passengerSnapshotId);
+                    Log.e("****LOCATION:", "Discard?");
+                    if (discardedCounter > DISCARD_INITIAL_LOCATIONS){
+                        Log.e("****LOCATION:", "No discard! I keep you!");
+                        final double lat = location.getLatitude();
+                        final double lng = location.getLongitude();
+                        Log.e("****LOCATION:", "passenger is at (" + lat + ", " +  lng + ")");
+                        Date dateUTC = new Date(location.getTime());
+                        String date = dateUTC.toString(); //-> "Thu Mar 21 16:03:20 GMT+01:00 2019"
+                        String time = date.substring(11, 19); //-> 16:03:20
+                        pairings.add(new PassengerVehiclePairing(passengerSnapshotId, time, lat, lng));
+                        Integer[] boundingBox = getBoundingBox(lat, lng);
+                        Log.e("****LOCATION:", "BB lower left: (" + boundingBox[2] + ", " +  boundingBox[0] + ")");
+                        Log.e("****LOCATION:", "BB upper right: (" + boundingBox[3] + ", " +  boundingBox[1] + ")");
+                        fetchVehicles(passengerSnapshotId, boundingBox);
+                    }
+                    discardedCounter++;
                 }
             }
         };
@@ -89,27 +100,21 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
     //Receives the result from AsyncTask class (GetNearbyVehicles), onPostExecute method.
     @Override
     public void processFinish(ArrayList<Vehicle> vehicles){
-        Log.e("*****PROCESSFINISH", "Vehicles recieved on main thread");
-        if (!vehicles.isEmpty()){
-            Log.e("*****PROCESSFINISH", " such as " + vehicles.get(0).name + ", passnap-id: " + vehicles.get(0).passengerSnapshotId);
-            for (PassengerVehiclePairing p : pairings){
-                if (p.passengerSnapshotId.equals(vehicles.get(0).passengerSnapshotId)){
-                    p.setVehicles(vehicles);
-                }
+        Log.e("****Vehicles on Main tread", " such as " + vehicles.get(0).name + ", passnap-id: " + vehicles.get(0).passengerSnapshotId);
+        locationSaver.printVehicles (vehicles);
+        locationSaver.saveVehicles (vehicles);
+        for (PassengerVehiclePairing p : pairings){
+            if (p.passengerSnapshotId.equals(vehicles.get(0).passengerSnapshotId)){
+                p.setVehicles(vehicles);
             }
-            String vehicleNames = "";
-            for (Vehicle v : vehicles){
-                vehicleNames = vehicleNames + v.name + ", ";
-            }
-            locationSaver.printVehicles (vehicleNames + " - " + vehicles.get(0).snapshot.getTime());
         }
     }
 
     // The vehicle API takes two longitudes and two latitudes and returns all vehicles in the enclosed area.
-    // Algorithm for offsetting a WGS84 position some meters along latitude or longitude
+    // Below is an algorithm for offsetting a WGS84 position some meters along latitude or longitude
     // https://stackoverflow.com/questions/2839533/adding-distance-to-a-gps-coordinate
-    // and API in getNearbyVehicles takes coordinates in WGS84*1000000
-    // It will work in the Västra Götaland region but probably have bugs elsewhere
+    // FYI, the API in getNearbyVehicles takes coordinates in WGS84*1000000
+    // It will work in the Västra Götaland region but probably have bugs elsewhere due to earth radius
     private Integer[] getBoundingBox(double lat, double lng){
         final double offset_meters = MAX_DISTANCE_VEHICLE_PASSENGER / 2;
         Integer[] boundingBox = {0,0,0,0};
@@ -123,12 +128,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
         boundingBox[3] = (int) Math.round(y2*1000000);
         return boundingBox;
     }
-    //TODO: skriv i rapport om varför formeln ovan funkar. 1 rad = 1 * 180/ pi = 57.3.. deg
-    //https://en.wikipedia.org/wiki/World_Geodetic_System
-    //kanske denna hjälper https://www.geodatasource.com/developers/java
-    //eller kanske denna http://www.movable-type.co.uk/scripts/latlong.html
-    //och att eftersom anståndet är litet behövs inte https://en.wikipedia.org/wiki/Vincenty%27s_formulae
-    //kanske kansken är det värt att kolla igeno kommentaer https://gis.stackexchange.com/questions/2951/algorithm-for-offsetting-a-latitude-longitude-by-some-amount-of-meters
+
 
     protected void createLocationRequest() {
         locationRequest = LocationRequest.create();
@@ -150,23 +150,19 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
         }
     }
 
-    public void printPassengerLocation(Location location){
-        int NR_OF_TEXT_ROWS = 36;
-        int maxNrOfSnapshots = 120; //about two minutes of data, if collected every second
-        locationSaver.savePassengerLocation(location);
-        if (count < NR_OF_TEXT_ROWS) {
-            locationSaver.printPassengerLocation(location, count);
-        }
-        count ++;
-        if (count == maxNrOfSnapshots) {
+    public void savePassengerLocation(Location location, int passengerSnapshotIdCount){
+        locationSaver.savePassengerLocation(location, passengerSnapshotIdCount);
+        locationSaver.printPassengerLocation(location, passengerSnapshotIdCount);
+        if (countSnapshots == maxNrOfSnapshots) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
             //you can also use: public LocationRequest setNumUpdates (int numUpdates)
         }
+        countSnapshots ++;
     }
 
     protected void onResume() {
         super.onResume();
-        //if (requestingLocationUpdates){... där rLU är en bool basetat på bundle savedinstancestate
+        //egentilgen borde du först kolla if (requestingLocationUpdates){... där rLU är en bool basetat på bundle savedinstancestate. android guide
         startLocationUpdates();
     }
 
@@ -175,7 +171,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
         super.onPause();
         //Stop location updates while paused?
         //fusedLocationClient.removeLocationUpdates(locationCallback);
-        //Just nu prenumererar den inte om appen är pausad ändå
+        //Just nu prenumererar den inte på ny platse om appen är pausad ändå
     }
 
 

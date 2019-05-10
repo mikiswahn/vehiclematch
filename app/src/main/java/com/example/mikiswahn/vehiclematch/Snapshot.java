@@ -14,13 +14,6 @@ public class Snapshot {
     private double distanceToPassenger; //TODO
 
 
-    public Snapshot (String time, double lat, double lng, int bearing){
-        this.time = time;
-        this.lat = lat;
-        this.lng = lng;
-        this.bearing = bearing;
-    }
-
     public Snapshot (double lat, double lng, int bearing){
         this.lat = lat;
         this.lng = lng;
@@ -36,16 +29,26 @@ public class Snapshot {
     }
 
 
+    public Snapshot (){
+        this.time = "";
+        this.lat = 0;
+        this.lng = 0;
+        this.bearing = 0;
+        this.distanceToPassenger = 9000;
+    }
 
 
+
+    /*
     //passenger:
     public Snapshot (String time, double lat, double lng){
         this.time = time;
         this.lat = lat;
         this.lng = lng;
-        this.bearing = -1; //exceptions, gött //TODO beräkna passagerares rikting utifrån föregående gps, typ plocka två punkter snabbt?
+        this.bearing = -1; //exceptions //beräkna passagerares rikting utifrån föregående gps, typ plocka två punkter snabbt?
         //float speedkmh = speedms * 3.6f;
     }
+    */
 
 
 }
