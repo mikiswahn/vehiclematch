@@ -162,7 +162,6 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
         // TODO BTYT UT SOM EGEN METOD ATT MAINTAINA TOPLISTAN
 
         if (!topCandidates.isEmpty()){ //TODO, läs i pvp
-            Collections.sort(topCandidates);
             Integer minNrIterations = 10;
             Integer iterationCouner = 1;
             if (iterationCouner++ <= minNrIterations){
@@ -178,6 +177,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                     }
                 }
             }
+            Collections.sort(topCandidates);
 
             String topList = "";
             for (Vehicle v : topCandidates){
