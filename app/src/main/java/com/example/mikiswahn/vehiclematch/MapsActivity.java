@@ -10,6 +10,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+
+/** Class for showing a world map and points on it. */
+
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -25,7 +29,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    /**
+    /*
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
      * This is where we can add markers or lines, add listeners or move the camera. In this case,
@@ -44,11 +48,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(consat, 15));
     }
 
-    /*
-    * Värt att testa hur bra masp aktivitten är på at updatera my location
-    *
-    * The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
-    * Google Maps Android API v2, but you must specify either coarse or fine
-    * location permissions for the 'MyLocation' functionality.
-    * */
 }

@@ -29,7 +29,7 @@
 
         <activity
             android:name=".LocationActivity"
-            android:label="@string/title_activity_maps" >
+            android:label="Location" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

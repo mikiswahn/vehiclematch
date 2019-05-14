@@ -16,7 +16,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 
 
-/* Class for collecting location data from vehicles. */
+/** Class for collecting location data from vehicles. */
 
 
 //Integer is the type of parameters sent to background task, Void for no progres update, Result of type ArrayList<Vehicle>
@@ -42,8 +42,8 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
         for (Vehicle v : result) {
             Log.e("**** VEHICLE ", "\n"+ v.name +", "+ v.gid + "\n");
         }
-        //Will feed vehicles back to main thread (LocationActivity class, processFinish method).
-        middleman.processFinish(result);
+        //Will feed vehicles back to main thread (LocationActivity class, onAPIResponse method).
+        middleman.onAPIResponse(result);
     }
 
     // TODO ADD BEARING AND TIME (ETC?) TO COMPARE WITH, FROM PASSENGER

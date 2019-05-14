@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">vehiclematch</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="no_vehicles_nearby">No vehicles nearby</string>
+
 </resources>

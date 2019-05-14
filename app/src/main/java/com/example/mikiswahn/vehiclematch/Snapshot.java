@@ -1,13 +1,13 @@
 package com.example.mikiswahn.vehiclematch;
 
 
-/* Class for a snapshot in time, along with a location data */
+/** Class for a snapshot, which is a point in time and location data */
 
 public class Snapshot {
     private String time;
-    private double lat;
-    private double lng;
-    private double distanceToPassenger; //TODO
+    public double lat;
+    public double lng;
+    public double distanceToPassenger;
 
 
     public Snapshot (double lat, double lng){
@@ -19,9 +19,13 @@ public class Snapshot {
         this.time = time;
     }
 
-    public String getTime(){
-        return time;
+    public void setDistanceToPassenger(double distance) {
+        this.distanceToPassenger = distance;
     }
+
+    public String getTime(){ return time; }
+    public double getLat(){ return lat; }
+    public double getLng(){ return lng; }
 
 
     public Snapshot (){

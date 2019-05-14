@@ -16,7 +16,7 @@ import android.content.Context;
 
 
 
-/* Class for updating txt-file & UI with location data. */
+/** Class for updating txt-file & UI with location data. */
 
 
 public class LocationSaver {
