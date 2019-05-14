@@ -52,6 +52,7 @@ public class PassengerVehiclePairing {
 
         if (vehicles.get(0).name.equals("No vehicles nearby")){
             candidates = null;
+            //TODO ganska fult att sätta till null. Lä'gag bara inte tioll ngt, och itsället för att i ONAPIRESPONSE kolla om != mull koll om isEmpty()
         }
         else {
             String vehicleTime = vehicles.get(0).snapshot.getTime();

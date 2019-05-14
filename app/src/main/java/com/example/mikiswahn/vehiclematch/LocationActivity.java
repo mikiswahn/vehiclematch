@@ -136,10 +136,9 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                 //We have found the passenger snapshot from which the vehicle query originated
                 boolean doneYet = pairing.setVehicles(vehicles);
                 while (!doneYet){
-                    //wait. (This in not the nicest way to control concurrency, but it is the simplest)
+                    //wait. (This in not the nicest way to control concurrency, but it's really simple)
                 }
-                if (!pairing.candidates.isEmpty()){
-                    Log.e("****", "Kollar bara att vi kommer hit ........................");
+                if (pairing.candidates != null){
                     for (Vehicle newVehicle : pairing.candidates){
                         for (Vehicle recordedVehicle : topCandidates){
                             if (newVehicle.gid == recordedVehicle.gid){
@@ -151,7 +150,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                     }
                 }
                 else{
-                    //no vehicles returned, nothing to add to toplist
+                    //no vehicle candidates returned, nothing to add to toplist
                 }
                 break;
             }
@@ -162,7 +161,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
 
         // TODO BTYT UT SOM EGEN METOD ATT MAINTAINA TOPLISTAN
 
-        if (!topCandidates.isEmpty()){
+        if (!topCandidates.isEmpty()){ //TODO, läs i pvp
             Collections.sort(topCandidates);
             Integer minNrIterations = 10;
             Integer iterationCouner = 1;
