@@ -15,6 +15,22 @@ public class Snapshot {
         this.lng = lng;
     }
 
+    //copy
+    public Snapshot (Snapshot s){
+        this.time = s.getTime();
+        this.lat = s.lat;
+        this.lng = s.lng;
+        this.distanceToPassenger = s.distanceToPassenger;
+    }
+
+    //empty snapshot
+    public Snapshot (){
+        this.time = "";
+        this.lat = 0;
+        this.lng = 0;
+        this.distanceToPassenger = 9000;
+    }
+
     public void setTime(String time) {
         this.time = time;
     }
@@ -28,17 +44,11 @@ public class Snapshot {
     public double getLng(){ return lng; }
 
 
-    public Snapshot (){
-        this.time = "";
-        this.lat = 0;
-        this.lng = 0;
-        this.distanceToPassenger = 9000;
-    }
-
+}
 
 
     /*
-    //passenger:
+    //passenger constructor:
     public Snapshot (String time, double lat, double lng){
         this.time = time;
         this.lat = lat;
@@ -48,5 +58,3 @@ public class Snapshot {
     }
     */
 
-
-}

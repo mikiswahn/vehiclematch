@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.net.URL;
+import java.util.Date;
+
 import javax.net.ssl.HttpsURLConnection;
 
 
@@ -29,6 +31,7 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
     public final String id = "device_1";
     private String tokenType = "Bearer";
     private String accessToken;
+    private Date expiryTime = new Date(System.currentTimeMillis());
 
 
     /*  When GetNearbyVehicles asynchronous task is executed, it goes through 2 steps:
@@ -39,6 +42,7 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
 
     @Override
     protected void onPostExecute(ArrayList<Vehicle> result){
+        /**/
         for (Vehicle v : result) {
             Log.e("**** VEHICLE ", "\n"+ v.name +", "+ v.gid + "\n");
         }
@@ -63,7 +67,7 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
             accessToken = generateToken();
             String endpoint = "https://api.vasttrafik.se/bin/rest.exe/v2/livemap";
             String query = "?minx=" + minx + "&maxx=" + maxx + "&miny=" + miny + "&maxy=" + maxy + "&onlyRealtime=yes";
-            //onlyRealtime=yes means only positions based on realtime data, no would include positions from planned timetable.
+            //onlyRealtime= 'yes' means only real time positions, 'no' would include planned positions from timetable.
             URL url = new URL(endpoint + query);
             connection = (HttpsURLConnection) url.openConnection();
             //connection.setReadTimeout(20000); //connection.setConnectTimeout(20000);
@@ -104,7 +108,6 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
                         String nameVeh = jsonReader.nextName();
                         if (nameVeh.equals("vehicles")){
                             jsonReader.beginArray();
-                            Log.e("****", "parsing vehicles, if any");
                             while (jsonReader.hasNext()) {
                                 jsonReader.beginObject();
                                 vehicles.add(readVehicle(passengerSnapshotId, jsonReader));
@@ -146,9 +149,11 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
 
     public Vehicle readVehicle (Integer passengerSnapshotId, JsonReader reader) {
         long gid = -1;
-        String vehicleName = "erronous vehicle"; //vehicles.name
-        double lat = -1; //vehicles.y
-        double lng = -1; //vehicles.x
+        String vehicleName = "erronous vehicle";
+        double lat = -1;
+        double lng = -1;
+        String lColor = "#102d64";
+        String bColor = "#dcd135";
         try {
             while(reader.hasNext()){
                 String name = reader.nextName();
@@ -162,6 +167,10 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
                     vehicleName  = reader.nextString();
                 } else if (name.equals ("gid")){
                     gid  = Long.parseLong(reader.nextString());
+                } else if (name.equals ("lcolor")){
+                    lColor  = reader.nextString();
+                } else if (name.equals ("bcolor")){
+                    bColor   = reader.nextString();
                 } else {
                     reader.skipValue();
                 }
@@ -170,7 +179,7 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
             Log.e("****JSON ERROR", "unknown inner");
             Log.e("****JSON ERROR", e.toString());
         }
-        Vehicle vehicle= new Vehicle (passengerSnapshotId, gid, vehicleName, lat, lng);
+        Vehicle vehicle= new Vehicle (passengerSnapshotId, gid, vehicleName, lat, lng, lColor, bColor);
         return vehicle;
     }
 
@@ -179,8 +188,15 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
 
 
     public String generateToken (){
-        // TODO  kolla om tokn redan finns (hasn't expired), annars generera här nedan igen.
-        String token = "";
+
+        /*
+        Date currentTime = new Date(System.currentTimeMillis());
+        if (currentTime.before(expiryTime)){
+            Log.e("****", " token has expired");
+            //TODO the code below should be in here, but it doesn't really work so I'll just ask re-authenticate myself for every query
+        }//if token not expired
+        */
+
         HttpsURLConnection connection = null;
         try {
             URL url = new URL("https://api.vasttrafik.se/token");
@@ -203,22 +219,25 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
                 InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
                 JsonReader jsonReader = new JsonReader(responseBodyReader);
                 jsonReader.beginObject();
+
                 while (jsonReader.hasNext()) {
                     String key = jsonReader.nextName();
                     if (key.equals("token_type")) {
                         String value = jsonReader.nextString();
                         tokenType = value;
                     } else if (key.equals("expires_in")) {
-                        String value = jsonReader.nextString();
-                        //TODO save expirty time, check time and use expiresin to get time
+                        //in milliseconds. remove a minute to have some buffer
+                        long expiryIn = Long.parseLong(jsonReader.nextString(), 10) * 1000L - 60000;
+                        expiryTime = new Date(System.currentTimeMillis() + expiryIn);
                     } else if (key.equals("access_token")) {
                         String value = jsonReader.nextString();
-                        token = value;
+                        accessToken = value;
                     } else {
                         String value = jsonReader.nextString();
                     }
                 }
                 jsonReader.close();
+
             } else{
                 Log.e("****ERROR code", connection.getResponseMessage());
                 //401 - Unauthorized, Token has been denied
@@ -229,8 +248,8 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
             Log.e("****HTTPS","The https url connection failed. protocol- or IO exception");
         }
 
-        Log.e("***** AccessToken is", token);
-        return token;
+        Log.e("***** AccessToken is", accessToken);
+        return accessToken;
     }
 
 

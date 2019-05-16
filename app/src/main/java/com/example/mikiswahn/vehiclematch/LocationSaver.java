@@ -18,15 +18,18 @@ import android.content.Context;
 
 /** Class for updating txt-file & UI with location data. */
 
-
+//TODO: rename to UI/DB/View since it doesn't just save locations
 public class LocationSaver {
 
     public ArrayList<TextView> textRows;
-    private Integer MAX_ROW_INDEX = 34; //there are 35 text rows
-    private Integer rowCursor = 1; //begins at one since index 0 is reserved:
     private TextView firstRow;
+    private Integer vehicleRowCursor = 1; //begins at one since firstRow is reserved
+    private Integer V_MAX_ROW_INDEX = 7;
+    private Integer candidateRowCursor = 8;
+    private Integer C_MAX_ROW_INDEX = 34; //there are 35 text rows
     private File filePassenger;
     private File fileVehicles;
+    private File fileCandidates;
 
 
     public LocationSaver(ArrayList<TextView> textRows, Context context) {
@@ -37,16 +40,21 @@ public class LocationSaver {
         }
     }
 
+    /****************************PRINT ON SCREEN***************************************************/
+
     public void printVehicles(ArrayList<Vehicle> vehicles) {
         if (vehicles.get(0).name.equals("No vehicles nearby")){
             //don't waste UI space with empty vehicle sets
         }
         else {
             String outprint = vehicleListPrettyPrint(vehicles);
-            if (rowCursor <= MAX_ROW_INDEX) {
-                TextView row = textRows.get(rowCursor);
+            if (vehicleRowCursor <= V_MAX_ROW_INDEX) {
+                TextView row = textRows.get(vehicleRowCursor);
                 row.setText(outprint);
-                rowCursor++;
+                vehicleRowCursor++;
+                if (vehicleRowCursor == V_MAX_ROW_INDEX+1){
+                    vehicleRowCursor=1; //modulo 7 is not useful since these rows begin indexing at 1 not 0
+                }
             }
         }
     }
@@ -60,6 +68,19 @@ public class LocationSaver {
     }
     //Bundle extra = location.getExtras(); -> information in K/V-pairs, such as satellites - the number of satellites used to derive the fix
     //String provider = location.getProvider(); ->Returns the name of the provider that generated this fix (dvs.location fix). typ gps antar jag?
+
+
+    public void printTopCandidates (ArrayList<Vehicle> topCandidates){
+        String outprint = TopCandidatesPrettyPrint(topCandidates);
+        if (candidateRowCursor <= C_MAX_ROW_INDEX) {
+            TextView row = textRows.get(candidateRowCursor);
+            row.setText(outprint);
+            candidateRowCursor++;
+        }
+    }
+
+
+    /****************************SAVE TO LOCAL STORAGE*********************************************/
 
     public void saveVehicles(ArrayList<Vehicle> vehicles){
         String outprint = "";
@@ -82,6 +103,12 @@ public class LocationSaver {
         writeToFile(filePassenger, snapshot);
     }
 
+    public void saveTopCandidates (ArrayList<Vehicle> topCandidates){
+        String outprint = TopCandidatesPrettyPrint(topCandidates) + "\n";
+        writeToFile(fileCandidates, outprint);
+        Log.e("**** TOP CANDIDATES **** ", outprint + "!! ");
+    }
+
     public void writeToFile(File file, String text){
         if(isExternalStorageWritable()){
             try {
@@ -100,16 +127,8 @@ public class LocationSaver {
         return Environment.MEDIA_MOUNTED.equals(state);
     }
 
-    public void getPublicAlbumStorageDir(String albumName, Context context) {
-        File pathExternalStorage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-        File path = new File(pathExternalStorage, albumName);
-        path.mkdirs();
-        MediaScannerConnection.scanFile(context, new String[] {path.toString()}, null, null);
-        String fullFilenameP = fileNameWithDate(true);
-        String fullFilenameV = fileNameWithDate(false);
-        filePassenger = new File(path, fullFilenameP);
-        fileVehicles = new File(path, fullFilenameV);
-    }
+
+    /****************************HELPER************************************************************/
 
     public String coordinatePrettyPrint (Location location){
         final double lat = location.getLatitude();
@@ -134,7 +153,6 @@ public class LocationSaver {
         return longDate.substring(11, 19);
     }
 
-
     public String vehicleListPrettyPrint(ArrayList<Vehicle> vehicles) {
         String passnpID = "" + vehicles.get(0).passengerSnapshotId;
         String time = vehicles.get(0).snapshot.getTime();
@@ -147,18 +165,34 @@ public class LocationSaver {
         return ( time + " | " + passnpID + " | " + vehicleNames );
     }
 
-    public String fileNameWithDate(Boolean isSnapshot){
+    public String TopCandidatesPrettyPrint(ArrayList<Vehicle> topCandidates){
+        String topList = "";
+        for (Vehicle v : topCandidates){
+            topList = topList + "(" + v.name + ", " + v.points +"p.)";
+        }
+        return topList;
+    }
+
+    public void getPublicAlbumStorageDir(String albumName, Context context) {
+        File pathExternalStorage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        File path = new File(pathExternalStorage, albumName);
+        path.mkdirs();
+        MediaScannerConnection.scanFile(context, new String[] {path.toString()}, null, null);
+        String fullFilenamePass = fileNameWithDate(" passenger");
+        String fullFilenameVeh = fileNameWithDate(" vehicles");
+        String fullFilenameCand = fileNameWithDate(" candidates");
+        filePassenger = new File(path, fullFilenamePass);
+        fileVehicles = new File(path, fullFilenameVeh);
+        fileCandidates = new File(path, fullFilenameCand);
+    }
+
+    public String fileNameWithDate(String name){
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Europe/Stockholm"));
         Date dateO = cal.getTime();
         String dateS = dateO.toString(); //-> "Thu Mar 21 16:03:20 GMT+01:00 2019"
         String date = dateS.substring(0, 13) + dateS.substring(14, 16); //filename mus be without ':'
-        if (isSnapshot){
-            return date + " passenger" + ".txt";
-        }
-        else{
-            return date + " vehicles" + ".txt";
-        }
+        return date + name + ".txt";
     }
 
 

@@ -34,25 +34,26 @@ public class PassengerVehiclePairing {
     //before calling this method you must have checked that the id of <vehicles> is the same as this.id
     public boolean setVehicles(ArrayList<Vehicle> vehicles){
         this.vehicles = vehicles;
-        computeTopCandidate();
-        // Can I be certain that true won't be returned until above method finish executing?
+        boolean doneYet = computeTopCandidate();
+        while (!doneYet){
+            //wait. (This in not the nicest way to control concurrency, but it's really simple)
+        }
         return true;
     }
 
     // keep track of vehicle gid. on main thread.
-    public void computeTopCandidate(){
+    public boolean computeTopCandidate(){
         //(bus vehicle length 20 m) + (low gps error 5 m)
         double HIGHEST_POINT_THRESHOLD = 25;
         //(tram vehicle length 30 m) + (low gps error 5 m)
         double NEXT_HIGHEST_POINT_THRESHOLD = 35;
         //(max vehicle length 30 m) + (high gps error passenger 8 m) + (high gps error vehicle 8 m)
-        //double LOWEST_POINT_THRESHOLD = 46;
-        double LOWEST_POINT_THRESHOLD = 320; //For testing at lindholmen office
+        double LOWEST_POINT_THRESHOLD = 46;
         //right now i query a square with sides of 60*2, which is much larger than a radius of 46.
+        //double LOWEST_POINT_THRESHOLD = 320; //For testing at lindholmen office
 
         if (vehicles.get(0).name.equals("No vehicles nearby")){
-            candidates = null;
-            //TODO ganska fult att sätta till null. Lä'gag bara inte tioll ngt, och itsället för att i ONAPIRESPONSE kolla om != mull koll om isEmpty()
+            //don't add any vehicles, candidates.isEmpty() will be true
         }
         else {
             String vehicleTime = vehicles.get(0).snapshot.getTime();
@@ -80,6 +81,7 @@ public class PassengerVehiclePairing {
                 }
             }
         }
+        return true;
     }
 
     public double computeDistance(double vLat, double vLng, Vehicle vehicle){

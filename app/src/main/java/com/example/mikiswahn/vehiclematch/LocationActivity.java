@@ -1,6 +1,6 @@
 package com.example.mikiswahn.vehiclematch;
 
-//TODO: Readmefil som påpekar alla buggar pga inte kommersiell produkt
+//TODO: Readmefil som påpekar alla buggar pga inte kommersiell produkt. Serious errors. Just had to work for myself to collect some data. If app would crash id have the ability to restart it. Didnt bother with all the checks
 
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 
-
+import static java.util.Collections.reverseOrder;
 
 
 /** Class for collecting location data about a passenger. */
@@ -37,10 +37,12 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
     //How often the passenger location will update
     long locationIntervall = THREESECONDS;
     // the first 18(?) locations will only be recorded in the txt file but never used for matching. (empirical tests showed that no vehicle data was retrieved for initial positions)
-    Integer DISCARD_INITIAL_LOCATIONS = 8;
+    Integer DISCARD_INITIAL_LOCATIONS = 4;
     Integer discardedCounter = 1;
     private int countSnapshots = 1;
     int maxNrOfSnapshots = 120; //about two minutes of data, if collected every second
+    Integer minNrIterations = 10;
+    Integer iterationCounter = 1;
 
     private LocationCallback locationCallback;
     private LocationRequest locationRequest;
@@ -84,8 +86,8 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                         String time = date.substring(11, 19); //-> 16:03:20
                         pairings.add(new PassengerVehiclePairing(passengerSnapshotId, time, lat, lng));
                         Integer[] boundingBox = getBoundingBox(lat, lng);
-                        Log.e("****Location:", "BB lower left: (" + boundingBox[2] + ", " +  boundingBox[0] + ")");
-                        Log.e("****Location:", "BB upper right: (" + boundingBox[3] + ", " +  boundingBox[1] + ")");
+                        //Log.e("****Location:", "Box lower left: (" + boundingBox[2] + ", " +  boundingBox[0] + ")");
+                        //Log.e("****Location:", "Box upper right: (" + boundingBox[3] + ", " +  boundingBox[1] + ")");
                         fetchVehicles(passengerSnapshotId, boundingBox);
                     }
                     discardedCounter++;
@@ -122,13 +124,13 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
         return boundingBox;
     }
 
+
     /************From received vehicles, determine which one the passenger is onboard**************/
 
     //Receives the result from AsyncTask class (GetNearbyVehicles), onPostExecute method.
     @Override
     public void onAPIResponse(ArrayList<Vehicle> vehicles){
-        //TODO BRYT UT SOM EN EGEN METOD ATT PARA IHOP SNAPSHOTS OCH SKAPA KANDIDATLISTA PÅ SNAPEN
-
+        Boolean sometingNewToPrint = false;
         int lastIndex = pairings.size()-1;
         for (int i = lastIndex; i >= 0; i--){
             PassengerVehiclePairing pairing = pairings.get(i);
@@ -136,17 +138,23 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                 //We have found the passenger snapshot from which the vehicle query originated
                 boolean doneYet = pairing.setVehicles(vehicles);
                 while (!doneYet){
-                    //wait. (This in not the nicest way to control concurrency, but it's really simple)
+                    //wait. (This isn't the nicest way to control concurrency, but it's really simple)
                 }
-                if (pairing.candidates != null){
+                if (!pairing.candidates.isEmpty()){
                     for (Vehicle newVehicle : pairing.candidates){
+                        boolean isAdded = false;
                         for (Vehicle recordedVehicle : topCandidates){
                             if (newVehicle.gid == recordedVehicle.gid){
-                                recordedVehicle.points = recordedVehicle.points + newVehicle.points;
+                                recordedVehicle.setPoints(recordedVehicle.points + newVehicle.points);
+                                sometingNewToPrint = true;
+                                isAdded = true;
                                 break;
                             }
                         }
-                        topCandidates.add(newVehicle);
+                        if (!isAdded){
+                            topCandidates.add(new Vehicle(newVehicle));
+                            sometingNewToPrint = true;
+                        }
                     }
                 }
                 else{
@@ -155,39 +163,39 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                 break;
             }
         }
+        updateToplist(sometingNewToPrint);
 
         locationSaver.printVehicles (vehicles);
         locationSaver.saveVehicles (vehicles);
+    }
 
-        // TODO BTYT UT SOM EGEN METOD ATT MAINTAINA TOPLISTAN
-
-        if (!topCandidates.isEmpty()){ //TODO, läs i pvp
-            Integer minNrIterations = 10;
-            Integer iterationCouner = 1;
-            if (iterationCouner++ <= minNrIterations){
-                // sort out all vehicles that aren't likely candidates.
-                if (topCandidates.get(0) != null){
-                    Integer highestScore = topCandidates.get(0).points;
-                    if (highestScore <= 15){ //Top candidate should have at least 15 points before it can be deemed to be superior
-                        for (Vehicle v : topCandidates){
-                            if (v.points < (0.75*highestScore)){
-                                topCandidates.remove(v);
-                            }
+    private void updateToplist(Boolean sometingNewToPrint){
+        if (!topCandidates.isEmpty()){
+            Collections.sort(topCandidates);
+            Collections.reverse(topCandidates);
+            //I just want it to work immediately, I know it is unnecessarily time consuming
+            if (minNrIterations <= iterationCounter++){
+                //After some iterations, sort out all vehicles that aren't likely candidates.
+                Integer highestScore = topCandidates.get(0).points;
+                Log.e("**** HIGHEST SCORE = ", " " + highestScore);
+                if (15 <= highestScore){ //Top candidate should have at least 15 points before it can be deemed to be superior
+                    for (Vehicle v : topCandidates){
+                        Log.e("**** score of some vehicle ", v.points + " points, removed if < " +  0.75*highestScore);
+                        if (v.points < (0.75*highestScore)){
+                            topCandidates.remove(v);
                         }
                     }
                 }
             }
-            Collections.sort(topCandidates);
-
-            String topList = "";
-            for (Vehicle v : topCandidates){
-                topList = topList + "( " + v.name + ", " + v.points +" )" ;
-
-            }
-            Log.e("**** TOP CANDIDATES **** ", "" + topList + "!! ");
         }
-    }
 
+        //TODO: If printer is iterating over the list as another instance of OnAPIResponse wants to add candidates. -ERRORS!
+        //solution: make a copy of the toplist
+        if (sometingNewToPrint) {
+            locationSaver.printTopCandidates (topCandidates);
+        }
+        locationSaver.saveTopCandidates (topCandidates);
+    }
 
     /***************************Subscribe to passenger Location************************************/
 
