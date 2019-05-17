@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.TimeZone;
 import android.location.Location;
@@ -30,6 +31,8 @@ public class LocationSaver {
     private File filePassenger;
     private File fileVehicles;
     private File fileCandidates;
+    Integer minNrIterations = 5;
+    Integer iterationCounter = 1;
 
 
     public LocationSaver(ArrayList<TextView> textRows, Context context) {
@@ -128,7 +131,7 @@ public class LocationSaver {
     }
 
 
-    /****************************HELPER************************************************************/
+    /****************************HELPERS***********************************************************/
 
     public String coordinatePrettyPrint (Location location){
         final double lat = location.getLatitude();
@@ -167,9 +170,23 @@ public class LocationSaver {
 
     public String TopCandidatesPrettyPrint(ArrayList<Vehicle> topCandidates){
         String topList = "";
-        for (Vehicle v : topCandidates){
-            topList = topList + "(" + v.name + ", " + v.points +"p.)";
+        if (!topCandidates.isEmpty()){
+            Collections.sort(topCandidates);
+            Collections.reverse(topCandidates);
+            //I just want it to work immediately, I know it is unnecessarily time consuming
+            Integer highestScore = topCandidates.get(0).points;
+            Log.e("**** HIGHEST SCORE = ", " " + highestScore);
+            for (Vehicle v : topCandidates){
+                Log.e("**** score of vehicle ", v.name + v.points + " points, removed if < " +  0.75*highestScore);
+                if ((0.5*highestScore) <= v.points || highestScore <= 25){
+                    //Only compose toplist from likely candidates
+                    //Top candidate should have at least 25 points before it can be deemed to be superior,
+                    //and if so, don't include anything that is 50%worse than top candidate
+                    topList = topList + "(" + v.name + ", " + v.points +"p.)";
+                }
+            }
         }
+
         return topList;
     }
 

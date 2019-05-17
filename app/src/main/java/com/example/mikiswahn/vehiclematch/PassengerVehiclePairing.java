@@ -48,9 +48,9 @@ public class PassengerVehiclePairing {
         //(tram vehicle length 30 m) + (low gps error 5 m)
         double NEXT_HIGHEST_POINT_THRESHOLD = 35;
         //(max vehicle length 30 m) + (high gps error passenger 8 m) + (high gps error vehicle 8 m)
-        double LOWEST_POINT_THRESHOLD = 46;
+        //double LOWEST_POINT_THRESHOLD = 46;
         //right now i query a square with sides of 60*2, which is much larger than a radius of 46.
-        //double LOWEST_POINT_THRESHOLD = 320; //For testing at lindholmen office
+        double LOWEST_POINT_THRESHOLD = 320; //For testing at lindholmen office
 
         if (vehicles.get(0).name.equals("No vehicles nearby")){
             //don't add any vehicles, candidates.isEmpty() will be true

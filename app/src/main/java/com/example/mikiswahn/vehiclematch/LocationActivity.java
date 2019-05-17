@@ -29,8 +29,8 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
     //Half the side length of bounding box
     //=The radius in meters around a passenger where their vehicle is assumed to be within
     //D in report, in meters, based on GPS error and max vehicle length
-    private double MAX_DISTANCE_VEHICLE_PASSENGER = 60;
-    //private double MAX_DISTANCE_VEHICLE_PASSENGER = 320; //For testing at lindholmen office
+    //private double MAX_DISTANCE_VEHICLE_PASSENGER = 60;
+    private double MAX_DISTANCE_VEHICLE_PASSENGER = 320; //For testing at lindholmen office
     private double EARTH_RADIUS = 6363000; //meters. Västra Götaland region
     long ONESECOND = 1000;
     long THREESECONDS = 3000;
@@ -170,6 +170,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
     }
 
     private void updateToplist(Boolean sometingNewToPrint){
+        /*
         if (!topCandidates.isEmpty()){
             Collections.sort(topCandidates);
             Collections.reverse(topCandidates);
@@ -188,6 +189,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
                 }
             }
         }
+        */
 
         //TODO: If printer is iterating over the list as another instance of OnAPIResponse wants to add candidates. -ERRORS!
         //solution: make a copy of the toplist
