@@ -87,4 +87,34 @@ public class Vehicle implements Comparable<Vehicle> {
         long id = randomGenerator.nextLong();
         return id;
     }
+
+    public Integer getPassengerSnapshotId(){
+        return passengerSnapshotId;
+    }
+
+    public long getGid(){
+        return gid;
+    }
+
+    public String getName(){
+        return name;
+    }
+
+    public Snapshot getSnapshot(){
+        return snapshot;
+    }
+
+    public Integer getPoints(){
+        return points;
+    }
+
+    public String getlColor(){
+        return lColor;
+    }
+
+    public String getbColor(){
+        return bColor;
+    }
+
+
 }

@@ -36,7 +36,8 @@ public class PassengerVehiclePairing {
         this.vehicles = vehicles;
         boolean doneYet = computeTopCandidate();
         while (!doneYet){
-            //wait. (This in not the nicest way to control concurrency, but it's really simple)
+            Log.e("**** is it needed?", "THIS IS NEEDED!!!");
+            //wait. (This is a horrible way to control concurrency, but it's really simple)
         }
         return true;
     }
@@ -48,18 +49,18 @@ public class PassengerVehiclePairing {
         //(tram vehicle length 30 m) + (low gps error 5 m)
         double NEXT_HIGHEST_POINT_THRESHOLD = 35;
         //(max vehicle length 30 m) + (high gps error passenger 8 m) + (high gps error vehicle 8 m)
-        //double LOWEST_POINT_THRESHOLD = 46;
+        double LOWEST_POINT_THRESHOLD = 46;
         //right now i query a square with sides of 60*2, which is much larger than a radius of 46.
-        double LOWEST_POINT_THRESHOLD = 320; //For testing at lindholmen office
+        //double LOWEST_POINT_THRESHOLD = 320; //For testing at lindholmen office
 
-        if (vehicles.get(0).name.equals("No vehicles nearby")){
+        if (vehicles.get(0).getName().equals("No vehicles nearby")){
             //don't add any vehicles, candidates.isEmpty() will be true
         }
         else {
             String vehicleTime = vehicles.get(0).snapshot.getTime();
             timeDelayOk(vehicleTime);
             for (Vehicle v : vehicles){
-                double distance = computeDistance(v.snapshot.getLat(), v.snapshot.getLng(), v);
+                double distance = computeDistance(v.getSnapshot().getLat(), v.getSnapshot().getLng(), v);
                 if (distance <= HIGHEST_POINT_THRESHOLD){
                     v.setPoints(5);
                     candidates.add(v);
@@ -77,7 +78,7 @@ public class PassengerVehiclePairing {
             if (candidates != null ){
                 //Collections.sort(candidates);
                 for (Vehicle v : candidates) {
-                    Log.e("****candidate", v.name + ", " + v.points + " points, " + v.snapshot.distanceToPassenger+ "meters");
+                    Log.e("****candidate", v.getName() + ", " + v.getPoints() + " points, " + v.getSnapshot().getDistanceToPassenger()+ "meters");
                 }
             }
         }
@@ -89,7 +90,7 @@ public class PassengerVehiclePairing {
         double distY = Math.abs(vLat-passengerLat)*(Math.PI/180)*EARTH_RADIUS;
         double distX = Math.abs(vLng-passengerLng)*(Math.PI/180)*EARTH_RADIUS*Math.cos(vLat);
         double distance = Math.sqrt(Math.pow(distY, 2) + Math.pow(distX, 2));
-        vehicle.snapshot.setDistanceToPassenger(distance);
+        vehicle.getSnapshot().setDistanceToPassenger(distance);
         return distance;
     }
 

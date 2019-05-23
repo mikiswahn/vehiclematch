@@ -50,7 +50,6 @@ public class GetNearbyVehicles extends AsyncTask< Integer, Void, ArrayList<Vehic
         middleman.onAPIResponse(result);
     }
 
-    // TODO ADD BEARING AND TIME (ETC?) TO COMPARE WITH, FROM PASSENGER
     //@param: Longitudes (x) and latitudes (y) to query vehicles within bounding box
     //minx = left border, maxx = right border, miny = lower border, maxy = upper boarder, all in WGS84*1000000
     @Override

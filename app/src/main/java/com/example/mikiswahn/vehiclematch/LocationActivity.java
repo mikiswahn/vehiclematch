@@ -1,7 +1,7 @@
 package com.example.mikiswahn.vehiclematch;
 
 //TODO: Readmefil som påpekar alla buggar pga inte kommersiell produkt. Serious errors. Just had to work for myself to collect some data. If app would crash id have the ability to restart it. Didnt bother with all the checks
-
+//sending message to a Handler on a dead thread tillexempel
 
 import java.util.ArrayList;
 import java.lang.Math;
@@ -22,15 +22,15 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import static java.util.Collections.reverseOrder;
 
 
-/** Class for collecting location data about a passenger. */
+/** The Main Activity! Class for collecting location data about a passenger. Receives nearby vehicles and  */
 
 public class LocationActivity extends FragmentActivity implements AsyncResponse{
 
     //Half the side length of bounding box
     //=The radius in meters around a passenger where their vehicle is assumed to be within
     //D in report, in meters, based on GPS error and max vehicle length
-    //private double MAX_DISTANCE_VEHICLE_PASSENGER = 60;
-    private double MAX_DISTANCE_VEHICLE_PASSENGER = 320; //For testing at lindholmen office
+    private double MAX_DISTANCE_VEHICLE_PASSENGER = 100;
+    //private double MAX_DISTANCE_VEHICLE_PASSENGER = 320; //For testing at lindholmen office
     private double EARTH_RADIUS = 6363000; //meters. Västra Götaland region
     long ONESECOND = 1000;
     long THREESECONDS = 3000;
@@ -134,18 +134,18 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
         int lastIndex = pairings.size()-1;
         for (int i = lastIndex; i >= 0; i--){
             PassengerVehiclePairing pairing = pairings.get(i);
-            if (pairing.passengerSnapshotId.equals(vehicles.get(0).passengerSnapshotId)){
+            if (pairing.passengerSnapshotId.equals(vehicles.get(0).getPassengerSnapshotId())){
                 //We have found the passenger snapshot from which the vehicle query originated
                 boolean doneYet = pairing.setVehicles(vehicles);
                 while (!doneYet){
-                    //wait. (This isn't the nicest way to control concurrency, but it's really simple)
+                    //wait. (This is a horrible way to control concurrency, but it's really simple)
                 }
                 if (!pairing.candidates.isEmpty()){
                     for (Vehicle newVehicle : pairing.candidates){
                         boolean isAdded = false;
                         for (Vehicle recordedVehicle : topCandidates){
-                            if (newVehicle.gid == recordedVehicle.gid){
-                                recordedVehicle.setPoints(recordedVehicle.points + newVehicle.points);
+                            if (newVehicle.getGid() == recordedVehicle.getGid()){
+                                recordedVehicle.setPoints(recordedVehicle.getPoints() + newVehicle.getPoints());
                                 sometingNewToPrint = true;
                                 isAdded = true;
                                 break;

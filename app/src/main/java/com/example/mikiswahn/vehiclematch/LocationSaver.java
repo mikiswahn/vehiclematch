@@ -46,7 +46,7 @@ public class LocationSaver {
     /****************************PRINT ON SCREEN***************************************************/
 
     public void printVehicles(ArrayList<Vehicle> vehicles) {
-        if (vehicles.get(0).name.equals("No vehicles nearby")){
+        if (vehicles.get(0).getName().equals("No vehicles nearby")){
             //don't waste UI space with empty vehicle sets
         }
         else {
@@ -87,9 +87,9 @@ public class LocationSaver {
 
     public void saveVehicles(ArrayList<Vehicle> vehicles){
         String outprint = "";
-        if (vehicles.get(0).name.equals("No vehicles nearby")){
-            String passnpID = "" + vehicles.get(0).passengerSnapshotId;
-            String time = vehicles.get(0).snapshot.getTime();
+        if (vehicles.get(0).getName().equals("No vehicles nearby")){
+            String passnpID = "" + vehicles.get(0).getPassengerSnapshotId();
+            String time = vehicles.get(0).getSnapshot().getTime();
             outprint = ( time + " | " + passnpID + " | " + "No vehicles nearby" + "\n" );
         }
         else {
@@ -157,15 +157,16 @@ public class LocationSaver {
     }
 
     public String vehicleListPrettyPrint(ArrayList<Vehicle> vehicles) {
-        String passnpID = "" + vehicles.get(0).passengerSnapshotId;
-        String time = vehicles.get(0).snapshot.getTime();
-        String vehicleNames = "";
+        String passnpID = "" + vehicles.get(0).getPassengerSnapshotId();
+        String time = vehicles.get(0).getSnapshot().getTime();
+        String vehicleNamesDistance = "";
         for (Vehicle v : vehicles) {
-            vehicleNames = vehicleNames + v.name + ", ";
+            int distance = (int) v.getSnapshot().getDistanceToPassenger();
+            vehicleNamesDistance = vehicleNamesDistance + v.getName() + " - " + distance +  " m, ";
         }
-        int indexOfComma = vehicleNames.length() - 2 ;
-        vehicleNames = vehicleNames.substring(0, indexOfComma);
-        return ( time + " | " + passnpID + " | " + vehicleNames );
+        int indexOfExtraComma = vehicleNamesDistance.length() - 2 ;
+        vehicleNamesDistance = vehicleNamesDistance.substring(0, indexOfExtraComma);
+        return ( time + " | " + passnpID + " | " + vehicleNamesDistance );
     }
 
     public String TopCandidatesPrettyPrint(ArrayList<Vehicle> topCandidates){
@@ -174,19 +175,18 @@ public class LocationSaver {
             Collections.sort(topCandidates);
             Collections.reverse(topCandidates);
             //I just want it to work immediately, I know it is unnecessarily time consuming
-            Integer highestScore = topCandidates.get(0).points;
+            Integer highestScore = topCandidates.get(0).getPoints();
             Log.e("**** HIGHEST SCORE = ", " " + highestScore);
             for (Vehicle v : topCandidates){
-                Log.e("**** score of vehicle ", v.name + v.points + " points, removed if < " +  0.75*highestScore);
-                if ((0.5*highestScore) <= v.points || highestScore <= 25){
+                Log.e("**** score of vehicle ", v.getName() + v.getPoints() + " points, removed if < " +  0.75*highestScore);
+                if ((0.5*highestScore) <= v.getPoints() || highestScore <= 25){
                     //Only compose toplist from likely candidates
                     //Top candidate should have at least 25 points before it can be deemed to be superior,
                     //and if so, don't include anything that is 50%worse than top candidate
-                    topList = topList + "(" + v.name + ", " + v.points +"p.)";
+                    topList = topList + "(" + v.getName() + ", " + v.getPoints() +"p.)";
                 }
             }
         }
-
         return topList;
     }
 

@@ -42,6 +42,7 @@ public class Snapshot {
     public String getTime(){ return time; }
     public double getLat(){ return lat; }
     public double getLng(){ return lng; }
+    public double getDistanceToPassenger(){ return distanceToPassenger; }
 
 
 }
