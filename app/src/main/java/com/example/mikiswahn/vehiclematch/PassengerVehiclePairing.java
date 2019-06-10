@@ -35,19 +35,15 @@ public class PassengerVehiclePairing {
     public boolean setVehicles(ArrayList<Vehicle> vehicles){
         this.vehicles = vehicles;
         boolean doneYet = computeTopCandidate();
-        while (!doneYet){
-            Log.e("**** is it needed?", "THIS IS NEEDED!!!");
-            //wait. (This is a horrible way to control concurrency, but it's really simple)
-        }
         return true;
     }
 
     // keep track of vehicle gid. on main thread.
     public boolean computeTopCandidate(){
         //(bus vehicle length 20 m) + (low gps error 5 m)
-        double HIGHEST_POINT_THRESHOLD = 25;
+        double HIGHEST_POINT_THRESHOLD = 30;
         //(tram vehicle length 30 m) + (low gps error 5 m)
-        double NEXT_HIGHEST_POINT_THRESHOLD = 35;
+        double NEXT_HIGHEST_POINT_THRESHOLD = 40;
         //(max vehicle length 30 m) + (high gps error passenger 8 m) + (high gps error vehicle 8 m)
         double LOWEST_POINT_THRESHOLD = 46;
         //right now i query a square with sides of 60*2, which is much larger than a radius of 46.

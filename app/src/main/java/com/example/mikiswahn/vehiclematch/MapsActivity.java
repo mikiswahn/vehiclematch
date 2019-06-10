@@ -11,7 +11,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
-/** Class for showing a world map and points on it. */
+/** NOT IN USE!! Class for showing a world map and points on it. */
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {

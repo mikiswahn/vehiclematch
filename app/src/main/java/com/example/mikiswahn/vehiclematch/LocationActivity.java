@@ -1,7 +1,8 @@
 package com.example.mikiswahn.vehiclematch;
 
-//TODO: Readmefil som påpekar alla buggar pga inte kommersiell produkt. Serious errors. Just had to work for myself to collect some data. If app would crash id have the ability to restart it. Didnt bother with all the checks
-//sending message to a Handler on a dead thread tillexempel
+//TODO: Readme: Some bugs related to this not being a commercial product, only for testing.
+// TODO e.g. not checking app permissions, just assuming they are given by user.
+// TODO Just had to work to collect some data. If app would crash i'd have the ability to restart it.
 
 import java.util.ArrayList;
 import java.lang.Math;
@@ -29,7 +30,7 @@ public class LocationActivity extends FragmentActivity implements AsyncResponse{
     //Half the side length of bounding box
     //=The radius in meters around a passenger where their vehicle is assumed to be within
     //D in report, in meters, based on GPS error and max vehicle length
-    private double MAX_DISTANCE_VEHICLE_PASSENGER = 100;
+    private double MAX_DISTANCE_VEHICLE_PASSENGER = 60;
     //private double MAX_DISTANCE_VEHICLE_PASSENGER = 320; //For testing at lindholmen office
     private double EARTH_RADIUS = 6363000; //meters. Västra Götaland region
     long ONESECOND = 1000;
